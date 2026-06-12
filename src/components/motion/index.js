@@ -1,13 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useReducedMotion,
-} from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 const SPRING = { type: "spring", stiffness: 100, damping: 20 };
 const MotionLink = motion.create(Link);
@@ -88,38 +82,12 @@ export function StaggerItem({ children, className = "", as = "div" }) {
 }
 
 /* ----------------------------------------------------------------
-   Magnetic — atracción sutil hacia el cursor (motion values, sin useState).
+   Magnetic — desactivado: solo envuelve sin seguir al cursor.
+   (Se mantiene la firma para no tocar cada uso; el botón conserva su
+   feedback sutil de hover/active vía TactileButton.)
 ---------------------------------------------------------------- */
-export function Magnetic({ children, className = "", strength = 0.3 }) {
-  const ref = useRef(null);
-  const reduce = useReducedMotion();
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 150, damping: 15, mass: 0.1 });
-  const sy = useSpring(y, { stiffness: 150, damping: 15, mass: 0.1 });
-
-  function handleMove(e) {
-    if (reduce || !ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    x.set((e.clientX - (r.left + r.width / 2)) * strength);
-    y.set((e.clientY - (r.top + r.height / 2)) * strength);
-  }
-  function reset() {
-    x.set(0);
-    y.set(0);
-  }
-
-  return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMove}
-      onMouseLeave={reset}
-      style={{ x: sx, y: sy }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
+export function Magnetic({ children, className = "" }) {
+  return <div className={className}>{children}</div>;
 }
 
 /* ----------------------------------------------------------------
