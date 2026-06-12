@@ -5,10 +5,11 @@ import ProfileSwitcher from "@/components/ProfileSwitcher";
 
 export default function BrandNav({ active = "" }) {
   const links = [
-    { href: "/calma", label: "Modo Calma", key: "calma" },
+    { href: "/calma", label: "Calma", key: "calma" },
     { href: "/registro", label: "Registro", key: "registro" },
     { href: "/observador", label: "Observador", key: "observador" },
     { href: "/reporte", label: "Reporte", key: "reporte" },
+    { href: "/orientacion", label: "Orientación", key: "orientacion" },
   ];
 
   return (

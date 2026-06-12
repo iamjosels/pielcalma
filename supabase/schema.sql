@@ -63,6 +63,11 @@ create table if not exists public.calma_events (
   primary key (user_id, id)
 );
 
+-- ---------- hábitos (re-ejecutable: añade columnas si faltan) ----------
+alter table public.flare_logs add column if not exists nutrition         text;
+alter table public.flare_logs add column if not exists physical_activity text;
+alter table public.flare_logs add column if not exists stress            text;
+
 -- ---------- RLS ----------
 alter table public.profiles      enable row level security;
 alter table public.flare_logs    enable row level security;

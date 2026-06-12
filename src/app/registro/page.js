@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import BrandNav from "@/components/BrandNav";
 import SafeDisclaimer from "@/components/SafeDisclaimer";
-import { useStore, addLog } from "@/lib/store";
+import { useStore, addLog, todayISO } from "@/lib/store";
 import {
   Reveal,
   Stagger,
@@ -56,6 +56,14 @@ const sidebarNotes = [
 const selectClass =
   "w-full rounded-[var(--radius-control)] border border-hairline-strong bg-cream-card px-4 py-3 text-sm text-navy outline-none transition focus:border-accent focus:ring-4 focus:ring-accent-soft/55";
 
+const WD = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const MO = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(`${iso}T00:00:00`);
+  return `${WD[d.getDay()]} ${d.getDate()} ${MO[d.getMonth()]}`;
+}
+
 export default function RegistroPage() {
   const [itchLevel, setItchLevel] = useState(8);
   const [sleepQuality, setSleepQuality] = useState("malo");
@@ -66,14 +74,22 @@ export default function RegistroPage() {
   const [notes, setNotes] = useState(
     "Lucas se rascó durante la noche y durmió interrumpido."
   );
+  const [nutrition, setNutrition] = useState("equilibrada");
+  const [physicalActivity, setPhysicalActivity] = useState("activa");
+  const [stress, setStress] = useState("algo");
+  const [logDate, setLogDate] = useState("");
 
   const [summary, setSummary] = useState(null);
+  const [savedDate, setSavedDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   const { profile, logs } = useStore();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    setLogDate(todayISO());
+  }, []);
   const child = mounted ? profile.childName : "Lucas";
   const caregiver = mounted ? profile.caregiverName : "Ana";
 
@@ -94,18 +110,24 @@ export default function RegistroPage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    const date = logDate || todayISO();
     const entry = {
       itchLevel,
       sleepQuality,
       routineStatus,
       caregiverEmotion,
+      nutrition,
+      physicalActivity,
+      stress,
       areas: selectedAreas,
       triggers: selectedTriggers,
       notes,
+      date,
     };
 
     // Persiste el registro real ANTES de pedir el resumen (no se pierde si falla la IA).
     addLog(entry);
+    setSavedDate(date);
     setLoading(true);
     setSummary(null);
     setError(false);
@@ -206,6 +228,54 @@ export default function RegistroPage() {
                 </div>
               </div>
 
+              {/* Día del registro */}
+              <div className="mb-7 rounded-[1.5rem] bg-cream p-5">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="logdate" className="text-sm font-semibold text-navy">
+                      Día del registro
+                    </label>
+                    <input
+                      id="logdate"
+                      type="date"
+                      value={logDate}
+                      max={mounted ? todayISO() : undefined}
+                      onChange={(e) => setLogDate(e.target.value)}
+                      className={`${selectClass} w-auto`}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      ["Hoy", 0],
+                      ["Ayer", -1],
+                      ["-2", -2],
+                      ["-3", -3],
+                    ].map(([lbl, off]) => {
+                      const d = mounted ? todayISO(off) : "";
+                      const on = logDate === d;
+                      return (
+                        <button
+                          type="button"
+                          key={lbl}
+                          onClick={() => setLogDate(d)}
+                          className={`rounded-full px-3.5 py-2 text-sm font-medium transition active:scale-[0.97] ${
+                            on
+                              ? "bg-accent text-white"
+                              : "border border-hairline-strong bg-cream-card text-ink-muted hover:border-accent/40 hover:text-navy"
+                          }`}
+                        >
+                          {lbl}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-ink-faint">
+                  Puedes registrar días anteriores; cada registro se ubica en su
+                  fecha dentro del reporte.
+                </p>
+              </div>
+
               {/* Comezón */}
               <div className="mb-7 rounded-[1.5rem] bg-cream p-5">
                 <div className="mb-4 flex items-center justify-between">
@@ -264,6 +334,47 @@ export default function RegistroPage() {
                     <option value="no realizada">No realizada</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Hábitos del día */}
+              <div className="mb-7 rounded-[1.5rem] bg-cream p-5">
+                <p className="mb-4 text-sm font-semibold text-navy">Hábitos del día</p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="nutrition" className="text-xs font-medium text-ink-muted">
+                      Nutrición
+                    </label>
+                    <select id="nutrition" value={nutrition} onChange={(e) => setNutrition(e.target.value)} className={selectClass}>
+                      <option value="equilibrada">Equilibrada</option>
+                      <option value="irregular">Irregular</option>
+                      <option value="algo nuevo">Algo nuevo</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="activity" className="text-xs font-medium text-ink-muted">
+                      Actividad física
+                    </label>
+                    <select id="activity" value={physicalActivity} onChange={(e) => setPhysicalActivity(e.target.value)} className={selectClass}>
+                      <option value="tranquila">Tranquila</option>
+                      <option value="activa">Activa</option>
+                      <option value="mucho sudor">Mucho sudor</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="stress" className="text-xs font-medium text-ink-muted">
+                      Estrés
+                    </label>
+                    <select id="stress" value={stress} onChange={(e) => setStress(e.target.value)} className={selectClass}>
+                      <option value="calmado">Calmado</option>
+                      <option value="algo">Algo</option>
+                      <option value="alto">Alto</option>
+                    </select>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-ink-faint">
+                  Sueño, nutrición, actividad física y estrés ayudan a notar
+                  patrones del día a día.
+                </p>
               </div>
 
               {/* Zonas */}
@@ -419,6 +530,36 @@ export default function RegistroPage() {
               </TactileButton>
             </Reveal>
 
+            {/* Registros recientes — ver cómo se manejan los días */}
+            <Reveal delay={0.2} className="rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)]">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-navy">Registros recientes</h3>
+                {mounted && (
+                  <span className="text-xs text-ink-muted">{logs.length} en total</span>
+                )}
+              </div>
+              {mounted && logs.length > 0 ? (
+                <ul className="mt-4 flex flex-col gap-2">
+                  {logs.slice(0, 5).map((l) => (
+                    <li
+                      key={l.id}
+                      className="flex items-center justify-between rounded-[1rem] bg-cream px-4 py-2.5 text-sm ring-1 ring-inset ring-hairline"
+                    >
+                      <span className="font-medium text-navy">{fmtDate(l.date)}</span>
+                      <span className="flex items-center gap-3 text-ink-muted">
+                        <span className="font-mono">{l.itchLevel}/10</span>
+                        <span className="capitalize">{l.sleepQuality}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-ink-faint">
+                  Aún no hay registros. Guarda el primero.
+                </p>
+              )}
+            </Reveal>
+
             <SafeDisclaimer />
           </div>
         </div>
@@ -466,7 +607,7 @@ export default function RegistroPage() {
           <div className="relative mt-8 rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-                Registro guardado
+                Registro guardado{savedDate ? ` · ${fmtDate(savedDate)}` : ""}
               </p>
               {mounted && (
                 <span className="rounded-full bg-wash-green px-3 py-1 text-xs font-medium text-navy">

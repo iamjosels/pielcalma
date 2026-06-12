@@ -66,6 +66,8 @@ export async function buildReportPdf(data) {
     patterns = [],
     questions = [],
     observations = [],
+    anticipations = [],
+    habits = [],
     generatedAt = new Date(),
   } = data;
 
@@ -460,6 +462,12 @@ export async function buildReportPdf(data) {
   bulletSection("Posibles patrones observados", patterns, C.accent);
   bulletSection("Preguntas para el dermatólogo", questions, [75, 122, 97]);
   bulletSection("Observaciones visuales", observations, [167, 104, 93]);
+  bulletSection(
+    "Hábitos de la semana",
+    habits.map((h) => `${h.label}: ${h.value}`),
+    C.navy
+  );
+  bulletSection("Para los próximos días", anticipations, C.accent);
   disclaimer();
   stampFooters();
 

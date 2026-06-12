@@ -122,6 +122,9 @@ export function addLog(log) {
     sleepQuality: log.sleepQuality || "regular",
     routineStatus: log.routineStatus || "parcial",
     caregiverEmotion: log.caregiverEmotion || "tranquila",
+    nutrition: log.nutrition || "equilibrada",
+    physicalActivity: log.physicalActivity || "tranquila",
+    stress: log.stress || "calmado",
     areas: log.areas || [],
     triggers: log.triggers || [],
     notes: log.notes || "",
@@ -273,6 +276,18 @@ function buildDemoSeed(pid) {
       sleepQuality: sleep,
       routineStatus: routine,
       caregiverEmotion: emotion,
+      nutrition: i % 5 === 0 ? "algo nuevo" : i % 3 === 0 ? "irregular" : "equilibrada",
+      physicalActivity:
+        triggers.includes("sudor") && triggers.includes("calor")
+          ? "mucho sudor"
+          : triggers.includes("calor") || triggers.includes("sudor")
+            ? "activa"
+            : "tranquila",
+      stress: ["preocupada", "agotada"].includes(emotion)
+        ? "alto"
+        : emotion === "con dudas"
+          ? "algo"
+          : "calmado",
       areas,
       triggers,
       notes,

@@ -133,6 +133,74 @@ export function observedPatterns(logs) {
   return patterns;
 }
 
+/**
+ * Anticipación SUAVE (no clínica): heads-up descriptivos desde los propios
+ * registros. Nunca predice un brote; señala coincidencias para observar.
+ */
+export function anticipations(logs) {
+  const all = Array.from(latestByDate(logs).values());
+  if (all.length < 3) {
+    return [
+      "Aún no hay suficientes registros para anticipar patrones. Sigue registrando para que aparezcan.",
+    ];
+  }
+  const out = [];
+  const high = all.filter((l) => l.itchLevel >= 7);
+
+  const freq = {};
+  for (const l of high) for (const t of l.triggers) freq[t] = (freq[t] || 0) + 1;
+  const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
+  if (top && top[1] >= 2) {
+    out.push(
+      `En tus días con "${top[0]}" sueles registrar más comezón; podría ser útil observar con atención cuando se repita.`
+    );
+  }
+  if (high.some((l) => l.sleepQuality === "malo")) {
+    out.push(
+      "Las noches con sueño reportado como malo coincidieron con más comezón; cuidar el descanso podría ayudar a notar el patrón."
+    );
+  }
+  if (high.filter((l) => l.stress === "alto").length >= 2) {
+    out.push(
+      "En días de más estrés también hubo más comezón registrada; observarlo puede dar contexto a la consulta."
+    );
+  }
+  if (all.some((l) => l.nutrition === "algo nuevo")) {
+    out.push(
+      "Cuando se registró algo nuevo en la alimentación, podría ser útil observar la piel los días siguientes."
+    );
+  }
+  if (out.length === 0) {
+    out.push(
+      "Por ahora no aparecen coincidencias marcadas; seguir registrando ayudará a anticipar patrones."
+    );
+  }
+  out.push(
+    "Esto no predice un brote: son coincidencias de tus propios registros para conversar con el dermatólogo."
+  );
+  return out;
+}
+
+/** Hábito más frecuente de la semana por dimensión (para mostrar en el reporte). */
+export function habitSummary(logs) {
+  const week = Array.from(latestByDate(logsWithinLast7(logs)).values());
+  const mode = (key, fallback) => {
+    const c = {};
+    for (const l of week) {
+      const v = l[key];
+      if (v) c[v] = (c[v] || 0) + 1;
+    }
+    const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
+    return top ? top[0] : fallback;
+  };
+  return [
+    { label: "Sueño", value: mode("sleepQuality", "—") },
+    { label: "Nutrición", value: mode("nutrition", "—") },
+    { label: "Actividad", value: mode("physicalActivity", "—") },
+    { label: "Estrés", value: mode("stress", "—") },
+  ];
+}
+
 /** Resumen compacto en texto, base para el generador / la IA. */
 export function buildReportContext(logs, observations, calmaEvents) {
   const m = metrics(logs);
@@ -142,6 +210,7 @@ export function buildReportContext(logs, observations, calmaEvents) {
     affectedSleepNights: m.affectedSleepNights,
     calmaFamiliar: calmaFamiliar(logs, observations, calmaEvents),
     patrones: observedPatterns(logs),
+    anticipaciones: anticipations(logs),
     weekly: weeklyData(logs),
     observaciones: observations.slice(0, 4).map((o) => o.observacionVisual).filter(Boolean),
   };

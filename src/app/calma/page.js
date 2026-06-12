@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import BrandNav from "@/components/BrandNav";
 import SafeDisclaimer from "@/components/SafeDisclaimer";
 import { useStore, addCalmaEvent } from "@/lib/store";
-import { calmaFamiliar } from "@/lib/aggregate";
+import { calmaFamiliar, anticipations } from "@/lib/aggregate";
 import {
   Reveal,
   Stagger,
@@ -84,6 +84,7 @@ export default function CalmaPage() {
   const caregiver = mounted ? profile.caregiverName : "Ana";
   const child = mounted ? profile.childName : "Lucas";
   const calma = mounted ? calmaFamiliar(logs, observations, calmaEvents) : 72;
+  const antic = mounted ? anticipations(logs) : [];
 
   async function handleEmotionClick(emotion) {
     setSelectedEmotion(emotion);
@@ -327,6 +328,20 @@ export default function CalmaPage() {
                 </p>
               </StaggerItem>
             </Stagger>
+
+            {antic.length > 0 && (
+              <div className="mt-6 flex gap-3 rounded-[1.5rem] bg-accent-soft/40 p-5 ring-1 ring-inset ring-accent/20">
+                <Sparkle size={20} weight="duotone" className="mt-0.5 shrink-0 text-accent" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                    Para los próximos días
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-navy/80">
+                    {antic[0]}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="mt-6">
               <SafeDisclaimer compact />

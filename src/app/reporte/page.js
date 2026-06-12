@@ -34,6 +34,8 @@ import {
   metrics as computeMetrics,
   calmaFamiliar as computeCalma,
   observedPatterns,
+  anticipations as computeAnticipations,
+  habitSummary,
   buildReportContext,
 } from "@/lib/aggregate";
 
@@ -75,6 +77,8 @@ export default function ReportePage() {
     [logs, observations, calmaEvents]
   );
   const clientPatterns = useMemo(() => observedPatterns(logs), [logs]);
+  const antic = useMemo(() => computeAnticipations(logs), [logs]);
+  const habits = useMemo(() => habitSummary(logs), [logs]);
 
   const hasData = mounted && logs.length > 0;
 
@@ -129,6 +133,8 @@ export default function ReportePage() {
       patterns: patternsList,
       questions: questionsList,
       observations: obsList,
+      anticipations: antic,
+      habits,
       generatedAt: new Date(),
     };
   }
@@ -316,6 +322,30 @@ export default function ReportePage() {
               </div>
             </div>
 
+            {/* Hábitos de la semana */}
+            <div className="mt-6 rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                Hábitos de la semana
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {habits.map((h) => (
+                  <div
+                    key={h.label}
+                    className="flex items-center gap-2 rounded-full bg-cream px-4 py-2 ring-1 ring-inset ring-hairline"
+                  >
+                    <span className="text-xs text-ink-muted">{h.label}</span>
+                    <span className="text-sm font-semibold capitalize text-navy">
+                      {h.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-ink-faint">
+                Valor más frecuente registrado en los últimos 7 días (sueño,
+                nutrición, actividad física y estrés).
+              </p>
+            </div>
+
             {/* Resumen + interpretación */}
             <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
@@ -474,6 +504,30 @@ export default function ReportePage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Para los próximos días (anticipación suave, no clínica) */}
+            <div className="mt-6 rounded-[var(--radius-card)] bg-accent-soft/40 p-6 ring-1 ring-inset ring-accent/20 sm:p-8">
+              <div className="flex items-center gap-2">
+                <Sparkle size={20} weight="duotone" className="text-accent" />
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                  Para los próximos días
+                </p>
+              </div>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-navy sm:text-3xl">
+                Anticipación basada en tus registros
+              </h2>
+              <ul className="mt-5 flex flex-col gap-3">
+                {antic.map((a, i) => (
+                  <li
+                    key={i}
+                    className="flex gap-3 rounded-[1rem] bg-cream-card p-4 text-sm leading-relaxed text-navy/80 ring-1 ring-inset ring-hairline"
+                  >
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                    {a}
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {/* Patrones / preguntas / observaciones */}
