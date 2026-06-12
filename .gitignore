@@ -55,3 +55,5 @@ next-env.d.ts
 
 # Permitir la plantilla de entorno (sin secretos)
 !.env.example
+
+.vercel
