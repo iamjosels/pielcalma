@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import BrandNav from "@/components/BrandNav";
 import SafeDisclaimer from "@/components/SafeDisclaimer";
 import { useStore, addObservation } from "@/lib/store";
-import { computeImageSignal } from "@/lib/imageSignal";
+import { prepareImage } from "@/lib/imageSignal";
 import {
   Reveal,
   Stagger,
@@ -29,6 +29,7 @@ export default function ObservadorPage() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [observation, setObservation] = useState(null);
+  const [compare, setCompare] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -51,6 +52,7 @@ export default function ObservadorPage() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedImage(file);
     setObservation(null);
+    setCompare(null);
     setError(false);
     setPreviewUrl(URL.createObjectURL(file));
   }
@@ -62,12 +64,12 @@ export default function ObservadorPage() {
     setError(false);
 
     try {
-      // Señal visual REAL desde la imagen (rojez/brillo) y comparación con la previa.
-      const signal = await computeImageSignal(selectedImage);
+      // Decodifica una sola vez: señal (índice), imagen para el modelo y miniatura.
+      const { redness, brightness, send, thumb } = await prepareImage(selectedImage);
       const prev = observations[0]; // observación más reciente del perfil
       const deltaPct =
         prev && prev.redness
-          ? Math.round(((signal.redness - prev.redness) / prev.redness) * 100)
+          ? Math.round(((redness - prev.redness) / prev.redness) * 100)
           : null;
       const imageName = selectedImage?.name || "imagen.jpg";
 
@@ -76,23 +78,20 @@ export default function ObservadorPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           imageName,
-          redness: signal.redness,
-          brightness: signal.brightness,
+          redness,
+          brightness,
           hasPrevious: Boolean(prev),
           deltaPct,
+          imageData: send, // 👈 la IA observa realmente la imagen
         }),
       });
       if (!response.ok) throw new Error("bad status");
       const data = await response.json();
 
-      // Persiste la observación en el historial del perfil.
-      addObservation({
-        ...data,
-        redness: signal.redness,
-        brightness: signal.brightness,
-        imageName,
-      });
+      // Persiste la observación (con miniatura) en el historial del perfil.
+      addObservation({ ...data, redness, brightness, imageName, thumb });
       setObservation(data);
+      setCompare({ prev: prev?.thumb || null, current: thumb });
     } catch {
       setError(true);
     } finally {
@@ -374,6 +373,56 @@ export default function ObservadorPage() {
             <h2 className="mt-3 max-w-4xl font-display text-2xl font-semibold leading-tight text-navy sm:text-3xl">
               Una descripción para recordar mejor lo que {caregiver} observó.
             </h2>
+
+            {/* Comparación visual antes / ahora */}
+            {compare && (
+              <div className="mt-6 rounded-[1.5rem] border border-hairline bg-cream p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                  Comparación visual
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-4 sm:gap-6">
+                  {compare.prev ? (
+                    <figure className="flex flex-col items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={compare.prev}
+                        alt="Registro visual anterior"
+                        className="h-28 w-28 rounded-[1rem] object-cover ring-1 ring-hairline"
+                      />
+                      <figcaption className="text-xs text-ink-muted">Anterior</figcaption>
+                    </figure>
+                  ) : (
+                    <div className="flex h-28 w-28 flex-col items-center justify-center gap-1 rounded-[1rem] border border-dashed border-hairline-strong text-center">
+                      <ImageSquare size={20} weight="duotone" className="text-ink-faint" />
+                      <span className="px-2 text-[0.65rem] leading-tight text-ink-faint">
+                        Sin foto anterior
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col items-center">
+                    <ArrowsLeftRight size={22} weight="bold" className="text-accent" />
+                    <span className="mt-1 rounded-full bg-accent-soft px-3 py-1 font-mono text-sm font-semibold text-accent">
+                      {observation.indiceVisualCambio}
+                    </span>
+                  </div>
+
+                  <figure className="flex flex-col items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={compare.current}
+                      alt="Registro visual actual"
+                      className="h-28 w-28 rounded-[1rem] object-cover ring-2 ring-accent/50"
+                    />
+                    <figcaption className="text-xs font-medium text-navy">Ahora</figcaption>
+                  </figure>
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-ink-faint">
+                  Comparación descriptiva entre fotos. No es una medida clínica ni de
+                  severidad.
+                </p>
+              </div>
+            )}
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
               <Stagger className="flex flex-col gap-5">

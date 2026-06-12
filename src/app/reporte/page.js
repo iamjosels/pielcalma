@@ -481,13 +481,26 @@ export default function ReportePage() {
               {[
                 { Icon: Path, wash: "bg-accent-soft", title: "Posibles patrones observados", items: patternsList, itemWash: "bg-cream ring-1 ring-inset ring-hairline" },
                 { Icon: ChatCircleDots, wash: "bg-wash-green", title: "Preguntas para el dermatólogo", items: questionsList, itemWash: "bg-wash-green/60" },
-                { Icon: Eye, wash: "bg-wash-peach", title: "Observaciones visuales", items: obsList, itemWash: "bg-wash-peach/60" },
+                { Icon: Eye, wash: "bg-wash-peach", title: "Observaciones visuales", items: obsList, itemWash: "bg-wash-peach/60", thumbs: observations.filter((o) => o.thumb).slice(0, 4).map((o) => o.thumb) },
               ].map((col) => (
                 <div key={col.title} className="rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)]">
                   <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-[1rem] ${col.wash}`}>
                     <col.Icon size={24} weight="duotone" className="text-navy" />
                   </div>
                   <h2 className="text-xl font-semibold tracking-tight text-navy">{col.title}</h2>
+                  {col.thumbs && col.thumbs.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {col.thumbs.map((t, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={i}
+                          src={t}
+                          alt={`Foto registrada ${i + 1}`}
+                          className="h-14 w-14 rounded-[0.6rem] object-cover ring-1 ring-hairline"
+                        />
+                      ))}
+                    </div>
+                  )}
                   <ul className="mt-5 flex flex-col gap-3">
                     {col.items?.length ? (
                       col.items.map((entry, index) => (

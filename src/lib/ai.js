@@ -118,10 +118,66 @@ async function anthropicComplete(system, user) {
   return json.content?.[0]?.text || "";
 }
 
+/* ---------------- visión (multimodal) ---------------- */
+function visionMessages(system, userText, imageDataUrl) {
+  return [
+    { role: "system", content: system },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: userText },
+        { type: "image_url", image_url: { url: imageDataUrl } },
+      ],
+    },
+  ];
+}
+
+async function openaiVision(system, userText, imageDataUrl) {
+  const base = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+  const res = await fetch(`${base}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      response_format: { type: "json_object" },
+      messages: visionMessages(system, userText, imageDataUrl),
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`openai-vision ${res.status} ${detail.slice(0, 200)}`);
+  }
+  const json = await res.json();
+  return json.choices?.[0]?.message?.content || "";
+}
+
+async function azureVision(system, userText, imageDataUrl) {
+  const endpoint = process.env.AZURE_OPENAI_ENDPOINT.replace(/\/$/, "");
+  const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
+  const apiVersion = process.env.AZURE_OPENAI_API_VERSION || "2024-08-01-preview";
+  const url = `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "api-key": process.env.AZURE_OPENAI_API_KEY },
+    body: JSON.stringify({
+      response_format: { type: "json_object" },
+      messages: visionMessages(system, userText, imageDataUrl),
+    }),
+  });
+  if (!res.ok) throw new Error(`azure-vision ${res.status}`);
+  const json = await res.json();
+  return json.choices?.[0]?.message?.content || "";
+}
+
 export function getLLM() {
   const p = provider();
   if (!p) return null;
   const complete =
     p === "openai" ? openaiComplete : p === "azure" ? azureComplete : anthropicComplete;
-  return { provider: p, complete };
+  const completeVision =
+    p === "openai" ? openaiVision : p === "azure" ? azureVision : null;
+  return { provider: p, complete, completeVision };
 }

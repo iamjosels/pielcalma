@@ -55,7 +55,20 @@ export function readState() {
 
 function writeState(next) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(next));
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(next));
+  } catch {
+    // Cuota excedida: descarta miniaturas y reintenta para no romper la app.
+    try {
+      const pruned = {
+        ...next,
+        observations: next.observations.map((o) => ({ ...o, thumb: null })),
+      };
+      window.localStorage.setItem(KEY, JSON.stringify(pruned));
+    } catch {
+      // si aún falla, seguimos sin persistir (mejor que crashear).
+    }
+  }
   window.dispatchEvent(new Event(EVENT));
 }
 
@@ -129,12 +142,21 @@ export function addObservation(obs) {
       imageName: obs.imageName || "imagen.jpg",
       redness: obs.redness ?? null,
       brightness: obs.brightness ?? null,
+      thumb: obs.thumb ?? null,
       observacionVisual: obs.observacionVisual || "",
       comparacionAnterior: obs.comparacionAnterior || "",
       indiceVisualCambio: obs.indiceVisualCambio || "",
       limitaciones: obs.limitaciones || "",
       createdAt: Date.now(),
     });
+    // Conserva miniatura solo en las últimas 6 observaciones del perfil (cuota).
+    s.observations
+      .filter((o) => o.profileId === pid)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(6)
+      .forEach((o) => {
+        o.thumb = null;
+      });
     return s;
   });
 }
