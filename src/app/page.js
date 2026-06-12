@@ -1,375 +1,392 @@
-import Link from "next/link";
+import BrandNav from "@/components/BrandNav";
+import { Reveal, Stagger, StaggerItem, Magnetic, TactileButton } from "@/components/motion";
+import {
+  Wind,
+  NotePencil,
+  Camera,
+  Stethoscope,
+  Path,
+  Eye,
+  ChatCircleDots,
+  Check,
+  ArrowRight,
+  ArrowUpRight,
+  Moon,
+  HandHeart,
+} from "@/components/icons";
 
 const flows = [
   {
+    n: "01",
     title: "Modo Calma",
     description:
       "Cuando Ana se preocupa, la app la guía paso a paso para ordenar lo que observa sin entrar en pánico.",
     href: "/calma",
     label: "Empezar con calma",
-    accent: "bg-[#DCD7FF]",
-    icon: "🌙",
+    Icon: Wind,
+    featured: true,
   },
   {
+    n: "02",
     title: "Registro de brote",
     description:
-      "Comezón, sueño, zonas observadas, posibles factores y emoción de la cuidadora en menos de un minuto.",
+      "Comezón, sueño, zonas, posibles factores y emoción de la cuidadora en menos de un minuto.",
     href: "/registro",
-    label: "Registrar ahora",
-    accent: "bg-[#DFF5EA]",
-    icon: "✍️",
+    label: "Registrar",
+    Icon: NotePencil,
+    wash: "bg-wash-green",
   },
   {
+    n: "03",
     title: "Observador Visual",
     description:
-      "Compara cambios visibles de forma descriptiva, sin diagnosticar ni medir severidad médica.",
+      "Compara cambios visibles de forma descriptiva, sin diagnosticar ni medir severidad.",
     href: "/observador",
     label: "Observar imagen",
-    accent: "bg-[#FFE6D9]",
-    icon: "📷",
+    Icon: Camera,
+    wash: "bg-wash-peach",
   },
   {
+    n: "04",
     title: "Reporte Médico",
     description:
-      "Convierte una semana de registros en un resumen claro con preguntas útiles para el dermatólogo.",
+      "Convierte una semana de registros en un resumen claro con preguntas para el dermatólogo.",
     href: "/reporte",
     label: "Ver reporte",
-    accent: "bg-[#E6F0FF]",
-    icon: "🩺",
+    Icon: Stethoscope,
+    wash: "bg-accent-soft",
   },
+];
+
+const diff = [
+  {
+    Icon: Path,
+    title: "Ordena",
+    text: "Convierte dudas sueltas en registros claros de sueño, comezón, rutina y posibles factores.",
+  },
+  {
+    Icon: Eye,
+    title: "Observa",
+    text: "Describe cambios visibles sin lenguaje clínico ni juicios médicos.",
+  },
+  {
+    Icon: ChatCircleDots,
+    title: "Comunica",
+    text: "Prepara un reporte semanal con preguntas útiles para la consulta.",
+  },
+];
+
+const iaSteps = [
+  { n: "01", title: "Acompaña", text: "Adapta el tono según cómo se siente Ana." },
+  { n: "02", title: "Observa", text: "Describe cambios visibles sin diagnóstico." },
+  { n: "03", title: "Resume", text: "Genera reportes claros para el dermatólogo." },
 ];
 
 const principles = [
   "No diagnostica",
   "No indica tratamientos",
   "No reemplaza al dermatólogo",
-  "Organiza información entre consultas",
+  "Organiza la información entre consultas",
 ];
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#FFF8EF] text-[#25324B]">
-      <nav className="relative z-20 border-b border-[#F3E7D8] bg-[#FFF8EF]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#DCD7FF] shadow-sm">
-              <span className="text-xl">🌿</span>
-            </div>
+    <main className="overflow-hidden bg-cream text-ink">
+      <BrandNav />
 
-            <div>
-              <p className="text-lg font-black tracking-tight text-[#25324B]">
-                PielCalma
-              </p>
-              <p className="-mt-1 text-xs text-[#7B7289]">
-                Bitácora inteligente de cuidado
-              </p>
-            </div>
-          </Link>
+      {/* HERO ---------------------------------------------------------- */}
+      <section className="relative mx-auto grid max-w-[1400px] items-center gap-12 px-4 pb-20 pt-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pb-28 lg:pt-20">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-accent-soft/45 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-28 top-40 h-96 w-96 rounded-full bg-wash-green/55 blur-3xl"
+        />
 
-          <div className="hidden items-center gap-6 text-sm font-medium text-[#6F6680] md:flex">
-            <Link href="/calma" className="hover:text-[#6B5BD6]">
-              Modo Calma
-            </Link>
-            <Link href="/registro" className="hover:text-[#6B5BD6]">
-              Registro
-            </Link>
-            <Link href="/observador" className="hover:text-[#6B5BD6]">
-              Observador
-            </Link>
-            <Link href="/reporte" className="hover:text-[#6B5BD6]">
-              Reporte
-            </Link>
-          </div>
-
-          <Link
-            href="/calma"
-            className="rounded-full bg-[#25324B] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#1D273B]"
-          >
-            Iniciar demo
-          </Link>
-        </div>
-      </nav>
-
-      <section className="relative mx-auto grid max-w-7xl gap-10 px-6 pb-16 pt-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pb-24 lg:pt-20">
-        <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#DCD7FF]/50 blur-3xl" />
-        <div className="absolute -right-24 top-28 h-80 w-80 rounded-full bg-[#DFF5EA]/70 blur-3xl" />
-
-        <div className="relative z-10">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#F0DFCA] bg-[#FFFCF7] px-4 py-2 text-sm font-semibold text-[#6F6680] shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-[#F4A7A3]" />
-            Reto 1 · Dermatitis atópica infantil
-          </div>
-
-          <h1 className="max-w-4xl font-serif text-5xl font-bold leading-[1.02] tracking-tight text-[#25324B] md:text-7xl">
-            Cuidar la piel de tu hijo,
-            <span className="relative ml-3 inline-block">
-              sin cargar sola con la incertidumbre.
-              <span className="absolute -bottom-2 left-0 h-3 w-full rounded-full bg-[#F4A7A3]/35" />
+        <Stagger className="relative">
+          <StaggerItem className="mb-6">
+            <span className="inline-flex items-center gap-2 rounded-full border border-hairline bg-cream-card px-4 py-2 text-sm font-medium text-ink-muted">
+              <span className="h-2 w-2 rounded-full bg-coral" />
+              Reto 1 · Dermatitis atópica infantil
             </span>
-          </h1>
+          </StaggerItem>
 
-          <p className="mt-8 max-w-2xl text-lg leading-8 text-[#625A70]">
-            PielCalma acompaña a madres como Ana entre consultas: ordena
-            brotes, sueño, posibles factores y cambios visibles para convertir
-            momentos de ansiedad en información clara para el dermatólogo.
-          </p>
+          <StaggerItem>
+            <h1 className="font-display text-[2.6rem] font-semibold leading-[1.04] tracking-tight text-navy sm:text-5xl lg:text-6xl">
+              Cuidar la piel de tu hijo,{" "}
+              <span className="relative whitespace-nowrap text-accent">
+                sin cargar sola
+                <span
+                  aria-hidden
+                  className="absolute -bottom-1 left-0 h-3 w-full rounded-full bg-coral/30"
+                />
+              </span>{" "}
+              con la incertidumbre.
+            </h1>
+          </StaggerItem>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/calma"
-              className="rounded-full bg-[#6B5BD6] px-7 py-4 text-center text-sm font-bold text-white shadow-lg shadow-[#6B5BD6]/20 transition hover:-translate-y-1 hover:bg-[#5848C7]"
-            >
-              Entrar al Modo Calma
-            </Link>
+          <StaggerItem>
+            <p className="mt-7 max-w-xl text-lg leading-relaxed text-ink-muted">
+              PielCalma acompaña a madres como Ana entre consultas: ordena
+              brotes, sueño, posibles factores y cambios visibles, y convierte
+              momentos de ansiedad en información clara para el dermatólogo.
+            </p>
+          </StaggerItem>
 
-            <Link
-              href="/reporte"
-              className="rounded-full border border-[#E8DCCB] bg-[#FFFCF7] px-7 py-4 text-center text-sm font-bold text-[#25324B] shadow-sm transition hover:-translate-y-1 hover:bg-white"
-            >
+          <StaggerItem className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Magnetic strength={0.3}>
+              <TactileButton href="/calma" variant="primary" className="w-full px-7 py-4 text-sm sm:w-auto">
+                Entrar al Modo Calma
+                <ArrowRight size={18} weight="bold" />
+              </TactileButton>
+            </Magnetic>
+            <TactileButton href="/reporte" variant="secondary" className="px-7 py-4 text-sm">
               Ver reporte demo
-            </Link>
-          </div>
+            </TactileButton>
+          </StaggerItem>
 
-          <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-2">
+          <StaggerItem className="mt-9 flex flex-wrap gap-2.5">
             {principles.map((item) => (
-              <div
+              <span
                 key={item}
-                className="flex items-center gap-3 rounded-2xl bg-[#FFFCF7] px-4 py-3 text-sm font-semibold text-[#625A70] shadow-sm"
+                className="inline-flex items-center gap-2 rounded-full bg-cream-card px-3.5 py-2 text-[0.8rem] font-medium text-ink-muted ring-1 ring-inset ring-hairline"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#DFF5EA] text-xs">
-                  ✓
-                </span>
+                <Check size={14} weight="bold" className="text-accent" />
                 {item}
-              </div>
+              </span>
             ))}
-          </div>
-        </div>
+          </StaggerItem>
+        </Stagger>
 
-        <div className="relative z-10">
-          <div className="relative mx-auto max-w-md rounded-[2.4rem] border border-[#F0DFCA] bg-[#FFFCF7] p-5 shadow-2xl shadow-[#C8B7A6]/20">
-            <div className="rounded-[2rem] bg-[#FFF8EF] p-5">
+        {/* Mockup de producto */}
+        <Reveal as="div" delay={0.15} y={28} className="relative">
+          <div className="relative mx-auto max-w-md rounded-[2.4rem] border border-hairline bg-cream-card p-5 shadow-[var(--shadow-lift)]">
+            <div className="rounded-[2rem] bg-cream p-5">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-[#25324B]">
-                    Hola Ana
-                  </p>
-                  <p className="text-xs text-[#7B7289]">
+                  <p className="text-sm font-semibold text-navy">Hola Ana</p>
+                  <p className="text-xs text-ink-muted">
                     Seguimiento de Lucas · 4 años
                   </p>
                 </div>
-
-                <div className="rounded-full bg-[#DCD7FF] px-3 py-1 text-xs font-bold text-[#6B5BD6]">
-                  Calma 72
-                </div>
+                <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">
+                  Calma <span className="font-mono">72</span>
+                </span>
               </div>
 
-              <div className="rounded-3xl bg-[#25324B] p-5 text-white">
-                <p className="text-sm text-white/70">Esta noche</p>
-                <h3 className="mt-2 text-2xl font-bold leading-tight">
-                  “Lucas se rascó y no durmió bien”
-                </h3>
-                <p className="mt-4 text-sm leading-6 text-white/75">
+              <div className="rounded-[1.5rem] bg-navy p-5 text-white">
+                <p className="text-xs uppercase tracking-wide text-white/55">
+                  Esta noche
+                </p>
+                <p className="mt-2 font-display text-2xl font-semibold leading-tight">
+                  &ldquo;Lucas se rascó y no durmió bien&rdquo;
+                </p>
+                <p className="mt-4 text-sm leading-relaxed text-white/75">
                   Respira. Vamos a ordenar lo que observaste en menos de un
                   minuto.
                 </p>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-3xl bg-[#DFF5EA] p-4">
-                  <p className="text-xs font-bold text-[#4B7A61]">Sueño</p>
-                  <p className="mt-2 text-xl font-black text-[#25324B]">
-                    Malo
-                  </p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="rounded-[1.25rem] bg-wash-green p-4">
+                  <p className="text-xs font-medium text-navy/60">Sueño</p>
+                  <p className="mt-1.5 text-xl font-semibold text-navy">Malo</p>
                 </div>
-
-                <div className="rounded-3xl bg-[#FFE6D9] p-4">
-                  <p className="text-xs font-bold text-[#A7685D]">Comezón</p>
-                  <p className="mt-2 text-xl font-black text-[#25324B]">
+                <div className="rounded-[1.25rem] bg-wash-peach p-4">
+                  <p className="text-xs font-medium text-navy/60">Comezón</p>
+                  <p className="mt-1.5 font-mono text-xl font-semibold text-navy">
                     8/10
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 rounded-3xl bg-white p-4 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-wide text-[#6B5BD6]">
+              <div className="mt-3 rounded-[1.25rem] border border-hairline bg-cream-card p-4">
+                <p className="text-[0.7rem] font-semibold uppercase tracking-wide text-accent">
                   Observación de la app
                 </p>
-                <p className="mt-2 text-sm leading-6 text-[#625A70]">
+                <p className="mt-2 text-sm leading-relaxed text-ink-muted">
                   Se observa coincidencia entre sueño afectado, calor y sudor.
                   No confirma causa médica; puede conversarse con el
                   dermatólogo.
                 </p>
               </div>
-
-              <div className="mt-4 rounded-3xl border border-[#F0DFCA] bg-[#FFFCF7] p-4">
-                <p className="text-xs font-bold text-[#7B7289]">
-                  Pregunta sugerida
-                </p>
-                <p className="mt-2 text-sm font-semibold leading-6 text-[#25324B]">
-                  ¿Cómo deberíamos registrar brotes después de noches calurosas?
-                </p>
-              </div>
             </div>
 
-            <div className="absolute -right-8 -top-8 hidden rounded-3xl bg-[#DCD7FF] p-4 shadow-lg md:block">
-              <p className="text-2xl">🌙</p>
+            <div className="pc-float absolute -right-6 -top-6 hidden rounded-2xl bg-accent-soft p-3 shadow-[var(--shadow-soft)] md:block">
+              <Moon size={24} weight="duotone" className="text-accent" />
             </div>
-
-            <div className="absolute -bottom-8 -left-8 hidden rounded-3xl bg-[#DFF5EA] p-4 shadow-lg md:block">
-              <p className="text-2xl">🫶</p>
+            <div
+              className="pc-float absolute -bottom-6 -left-6 hidden rounded-2xl bg-wash-green p-3 shadow-[var(--shadow-soft)] md:block"
+              style={{ animationDelay: "1.4s" }}
+            >
+              <HandHeart size={24} weight="duotone" className="text-navy" />
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      <section className="border-y border-[#F0DFCA] bg-[#FFFCF7]">
-        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-14 lg:grid-cols-[0.75fr_1.25fr] lg:items-center">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#6B5BD6]">
+      {/* DIFERENCIA — heading sticky + lista con divisores (no 3 cards) -- */}
+      <section className="border-y border-hairline bg-cream-card">
+        <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16 lg:py-20">
+          <Reveal>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
               La diferencia
             </p>
-
-            <h2 className="mt-4 font-serif text-4xl font-bold leading-tight text-[#25324B]">
-              No es una app para “diagnosticar”. Es una app para acompañar
-              mejor.
+            <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-navy lg:text-[2.5rem]">
+              No es una app para diagnosticar. Es una app para acompañar mejor.
             </h2>
-          </div>
+          </Reveal>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-3xl bg-[#FFF8EF] p-6">
-              <p className="text-3xl">🧭</p>
-              <h3 className="mt-4 text-lg font-black text-[#25324B]">
-                Ordena
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-[#625A70]">
-                Convierte dudas sueltas en registros claros de sueño, comezón,
-                rutina y posibles factores.
-              </p>
-            </div>
-
-            <div className="rounded-3xl bg-[#FFF8EF] p-6">
-              <p className="text-3xl">👁️</p>
-              <h3 className="mt-4 text-lg font-black text-[#25324B]">
-                Observa
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-[#625A70]">
-                Describe cambios visibles sin usar lenguaje clínico ni emitir
-                juicios médicos.
-              </p>
-            </div>
-
-            <div className="rounded-3xl bg-[#FFF8EF] p-6">
-              <p className="text-3xl">📝</p>
-              <h3 className="mt-4 text-lg font-black text-[#25324B]">
-                Comunica
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-[#625A70]">
-                Prepara un reporte semanal y preguntas útiles para la consulta.
-              </p>
-            </div>
-          </div>
+          <Stagger className="flex flex-col">
+            {diff.map((d, i) => (
+              <StaggerItem
+                key={d.title}
+                className={`flex gap-5 py-6 ${i > 0 ? "border-t border-hairline" : "lg:pt-0"}`}
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] bg-cream ring-1 ring-inset ring-hairline">
+                  <d.Icon size={24} weight="duotone" className="text-accent" />
+                </span>
+                <div>
+                  <h3 className="text-lg font-semibold text-navy">{d.title}</h3>
+                  <p className="mt-1.5 max-w-md leading-relaxed text-ink-muted">
+                    {d.text}
+                  </p>
+                </div>
+              </StaggerItem>
+            ))}
+          </Stagger>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="mb-10 max-w-3xl">
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-[#6B5BD6]">
+      {/* FLUJOS — bento asimétrico ------------------------------------- */}
+      <section className="mx-auto max-w-[1400px] px-4 py-20 sm:px-6">
+        <Reveal className="mb-12 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
             Flujos del MVP
           </p>
-
-          <h2 className="mt-4 font-serif text-4xl font-bold leading-tight text-[#25324B]">
-            Cuatro momentos diseñados alrededor de Ana, no alrededor del sistema.
+          <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-navy lg:text-[2.5rem]">
+            Cuatro momentos diseñados alrededor de Ana, no del sistema.
           </h2>
+        </Reveal>
 
-          <p className="mt-4 text-lg leading-8 text-[#625A70]">
-            Cada flujo responde a un momento real: preocupación nocturna,
-            registro rápido, observación visual y preparación para consulta.
-          </p>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <Stagger className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           {flows.map((flow) => (
-            <Link
+            <StaggerItem
               key={flow.title}
-              href={flow.href}
-              className="group rounded-[2rem] border border-[#F0DFCA] bg-[#FFFCF7] p-5 shadow-sm transition hover:-translate-y-2 hover:shadow-xl hover:shadow-[#C8B7A6]/20"
+              className={
+                flow.featured
+                  ? "lg:col-span-7 lg:row-span-2"
+                  : flow.n === "02" || flow.n === "04"
+                    ? "lg:col-span-5"
+                    : "lg:col-span-5"
+              }
             >
-              <div
-                className={`mb-6 flex h-16 w-16 items-center justify-center rounded-3xl ${flow.accent}`}
-              >
-                <span className="text-3xl">{flow.icon}</span>
-              </div>
+              <Magnetic strength={0.12} className="h-full">
+                <a
+                  href={flow.href}
+                  className={`group flex h-full flex-col justify-between rounded-[var(--radius-card)] p-7 transition-[transform,box-shadow] duration-300 hover:-translate-y-1 ${
+                    flow.featured
+                      ? "min-h-[19rem] bg-navy text-white shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-lift)]"
+                      : "border border-hairline bg-cream-card shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-soft)]"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <span
+                      className={`flex h-14 w-14 items-center justify-center rounded-[1.1rem] ${
+                        flow.featured ? "bg-white/10" : flow.wash
+                      }`}
+                    >
+                      <flow.Icon
+                        size={28}
+                        weight="duotone"
+                        className={flow.featured ? "text-accent-soft" : "text-navy"}
+                      />
+                    </span>
+                    <span
+                      className={`font-mono text-sm ${flow.featured ? "text-white/40" : "text-ink-faint"}`}
+                    >
+                      {flow.n}
+                    </span>
+                  </div>
 
-              <h3 className="text-xl font-black text-[#25324B]">
-                {flow.title}
-              </h3>
+                  <div className={flow.featured ? "mt-10" : "mt-8"}>
+                    <h3
+                      className={`font-display font-semibold ${
+                        flow.featured ? "text-3xl" : "text-xl"
+                      } ${flow.featured ? "text-white" : "text-navy"}`}
+                    >
+                      {flow.title}
+                    </h3>
+                    <p
+                      className={`mt-3 max-w-md leading-relaxed ${
+                        flow.featured ? "text-white/70" : "text-ink-muted"
+                      }`}
+                    >
+                      {flow.description}
+                    </p>
 
-              <p className="mt-3 min-h-24 text-sm leading-6 text-[#625A70]">
-                {flow.description}
-              </p>
-
-              <div className="mt-6 flex items-center justify-between">
-                <span className="text-sm font-bold text-[#6B5BD6]">
-                  {flow.label}
-                </span>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FFF8EF] transition group-hover:bg-[#6B5BD6] group-hover:text-white">
-                  →
-                </span>
-              </div>
-            </Link>
+                    <span
+                      className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ${
+                        flow.featured ? "text-accent-soft" : "text-accent"
+                      }`}
+                    >
+                      {flow.label}
+                      <ArrowUpRight
+                        size={16}
+                        weight="bold"
+                        className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                      />
+                    </span>
+                  </div>
+                </a>
+              </Magnetic>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 pb-16">
-        <div className="grid gap-6 rounded-[2rem] bg-[#25324B] p-8 text-white shadow-xl shadow-[#25324B]/10 lg:grid-cols-[0.8fr_1.2fr] lg:p-10">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#DCD7FF]">
-              Calm Intelligence
-            </p>
-
-            <h2 className="mt-4 font-serif text-4xl font-bold leading-tight">
-              IA diseñada para reducir ansiedad, no para reemplazar al médico.
-            </h2>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-3xl bg-white/10 p-5">
-              <p className="text-2xl">1</p>
-              <h3 className="mt-3 font-bold">Acompaña</h3>
-              <p className="mt-2 text-sm leading-6 text-white/70">
-                Adapta el tono según cómo se siente Ana.
-              </p>
-            </div>
-
-            <div className="rounded-3xl bg-white/10 p-5">
-              <p className="text-2xl">2</p>
-              <h3 className="mt-3 font-bold">Compara</h3>
-              <p className="mt-2 text-sm leading-6 text-white/70">
-                Describe cambios visibles sin diagnóstico.
-              </p>
-            </div>
-
-            <div className="rounded-3xl bg-white/10 p-5">
-              <p className="text-2xl">3</p>
-              <h3 className="mt-3 font-bold">Resume</h3>
-              <p className="mt-2 text-sm leading-6 text-white/70">
-                Genera reportes claros para el dermatólogo.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-6 pb-20">
-        <div className="rounded-[2rem] border border-[#F0DFCA] bg-[#FFFCF7] p-6 shadow-sm">
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+      {/* IA — sección navy con divisores ------------------------------ */}
+      <section className="mx-auto max-w-[1400px] px-4 pb-20 sm:px-6">
+        <Reveal className="overflow-hidden rounded-[var(--radius-card)] bg-navy p-8 text-white lg:p-12">
+          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
             <div>
-              <h2 className="font-serif text-3xl font-bold text-[#25324B]">
-                “Hoy no tienes que recordarlo todo. Solo registrar lo importante.”
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-soft">
+                Calm Intelligence
+              </p>
+              <h2 className="mt-4 font-display text-3xl font-semibold leading-tight lg:text-[2.4rem]">
+                IA pensada para reducir ansiedad, no para reemplazar al médico.
               </h2>
+            </div>
 
-              <p className="mt-4 leading-7 text-[#625A70]">
+            <div className="grid gap-px overflow-hidden rounded-2xl bg-white/10 sm:grid-cols-3">
+              {iaSteps.map((step) => (
+                <div key={step.n} className="bg-navy p-6">
+                  <span className="font-mono text-sm text-white/40">
+                    {step.n}
+                  </span>
+                  <h3 className="mt-3 text-lg font-semibold">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/65">
+                    {step.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* CIERRE -------------------------------------------------------- */}
+      <section className="mx-auto max-w-[1400px] px-4 pb-24 sm:px-6">
+        <Reveal className="rounded-[var(--radius-card)] border border-hairline bg-cream-card p-8 lg:p-10">
+          <div className="grid gap-8 lg:grid-cols-[1fr_0.7fr] lg:items-center">
+            <div>
+              <h2 className="font-display text-2xl font-semibold leading-snug text-navy lg:text-3xl">
+                &ldquo;Hoy no tienes que recordarlo todo. Solo registrar lo
+                importante.&rdquo;
+              </h2>
+              <p className="mt-4 max-w-xl leading-relaxed text-ink-muted">
                 PielCalma no diagnostica, no indica tratamientos y no reemplaza
                 al dermatólogo. Las observaciones son descriptivas y sirven para
                 organizar información entre consultas.
@@ -377,23 +394,29 @@ export default function HomePage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
-              <Link
-                href="/calma"
-                className="rounded-full bg-[#6B5BD6] px-7 py-4 text-center text-sm font-bold text-white shadow-lg shadow-[#6B5BD6]/20 transition hover:-translate-y-1 hover:bg-[#5848C7]"
-              >
-                Probar flujo completo
-              </Link>
-
-              <Link
-                href="/reporte"
-                className="rounded-full border border-[#E8DCCB] bg-white px-7 py-4 text-center text-sm font-bold text-[#25324B] transition hover:-translate-y-1"
-              >
+              <Magnetic strength={0.3}>
+                <TactileButton href="/calma" variant="primary" className="w-full px-7 py-4 text-sm sm:w-auto">
+                  Probar flujo completo
+                  <ArrowRight size={18} weight="bold" />
+                </TactileButton>
+              </Magnetic>
+              <TactileButton href="/reporte" variant="secondary" className="px-7 py-4 text-sm">
                 Ver reporte
-              </Link>
+              </TactileButton>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
+
+      {/* FOOTER -------------------------------------------------------- */}
+      <footer className="border-t border-hairline">
+        <div className="mx-auto flex max-w-[1400px] flex-col items-start justify-between gap-3 px-4 py-8 text-sm text-ink-muted sm:flex-row sm:items-center sm:px-6">
+          <p className="font-medium text-navy">
+            PielCalma · Bitácora inteligente de cuidado familiar
+          </p>
+          <p>Reto 1 · Desafío IA Bagó Perú</p>
+        </div>
+      </footer>
     </main>
   );
 }

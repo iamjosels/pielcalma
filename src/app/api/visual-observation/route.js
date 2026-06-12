@@ -1,36 +1,30 @@
+import { getLLM, safeSystemPrompt, extractJson } from "@/lib/ai";
+import { genVisualObservation } from "@/lib/generators";
+
 export async function GET() {
-  return Response.json({
-    status: "ok",
-    endpoint: "/api/visual-observation",
-    message: "Endpoint simulado de Observador Visual funcionando.",
-  });
+  return Response.json({ status: "ok", endpoint: "/api/visual-observation" });
 }
 
 export async function POST(request) {
-  try {
-    const body = await request.json();
+  const body = await request.json().catch(() => ({}));
+  // El índice y la comparación se calculan desde la señal real (no por IA).
+  const base = genVisualObservation(body);
+  const llm = getLLM();
 
-    const { imageName = "registro-lucas-dia-7.jpg" } = body;
-
-    return Response.json({
-      imageName,
-      observacionVisual:
-        "Se observa enrojecimiento visible y resequedad aparente en la zona registrada.",
-      comparacionAnterior:
-        "Respecto al último registro, la extensión visual parece ligeramente mayor.",
-      indiceVisualCambio: "+18%",
-      limitaciones:
-        "La observación puede verse afectada por iluminación, distancia, ángulo de la foto y calidad de imagen.",
-      disclaimer:
-        "Esta observación no constituye diagnóstico médico, no mide severidad clínica y no reemplaza la evaluación del dermatólogo.",
-    });
-  } catch (error) {
-    return Response.json(
-      {
-        error: "No se pudo generar la observación visual.",
-        details: error.message,
-      },
-      { status: 500 }
-    );
+  if (llm) {
+    try {
+      const user = `Describe de forma NO diagnóstica una observación visual de piel a partir de esta señal medida: ${JSON.stringify(
+        body
+      )}.
+Devuelve un objeto JSON con la clave "observacionVisual": string descriptiva (sin diagnóstico, sin severidad). No incluyas números de cambio.`;
+      const json = extractJson(await llm.complete(safeSystemPrompt, user));
+      if (json.observacionVisual) {
+        return Response.json({ ...base, observacionVisual: json.observacionVisual });
+      }
+    } catch {
+      // cae a la base
+    }
   }
+
+  return Response.json(base);
 }

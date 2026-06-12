@@ -1,43 +1,48 @@
+import { getLLM, safeSystemPrompt, extractJson } from "@/lib/ai";
+import { genReport, DISCLAIMER } from "@/lib/generators";
+
 export async function GET() {
-  return Response.json({
-    status: "ok",
-    endpoint: "/api/report",
-    message: "Endpoint simulado de Reporte Médico funcionando.",
-  });
+  return Response.json({ status: "ok", endpoint: "/api/report" });
 }
 
-export async function POST() {
-  try {
-    return Response.json({
-      resumenSemanal:
-        "Durante los últimos 7 días, Lucas presentó comezón alta en varios registros, especialmente en noches con sueño afectado. Ana logró registrar posibles factores como calor, sudor y detergente nuevo, lo que permite organizar mejor la información para la consulta.",
-      patronesObservados: [
-        "La comezón más alta coincidió con noches de sueño malo.",
-        "Tres registros muestran coincidencia entre calor, sudor y mayor incomodidad.",
-        "La rutina indicada fue parcial en algunos días con mayor comezón.",
-        "No se confirma causalidad médica; son coincidencias útiles para conversar con el dermatólogo.",
-      ],
-      preguntasDermatologo: [
-        "¿Qué señales deberían motivar una consulta antes de la fecha programada?",
-        "¿Cómo deberíamos registrar los brotes cuando aparecen después de calor o sudoración?",
-        "¿Qué información visual o de hábitos sería más útil llevar a la próxima consulta?",
-      ],
-      observacionesVisuales: [
-        "Se observó enrojecimiento visible en la zona registrada.",
-        "La extensión visual parece ligeramente mayor respecto al registro anterior.",
-        "La comparación puede estar influenciada por iluminación y ángulo.",
-      ],
-      calmaFamiliar: 72,
-      disclaimer:
-        "PielCalma no diagnostica, no indica tratamientos y no reemplaza al dermatólogo. Este reporte organiza información registrada por la cuidadora para facilitar la conversación con el profesional de salud.",
-    });
-  } catch (error) {
-    return Response.json(
-      {
-        error: "No se pudo generar el reporte.",
-        details: error.message,
-      },
-      { status: 500 }
-    );
+export async function POST(request) {
+  const body = await request.json().catch(() => ({}));
+  const llm = getLLM();
+
+  if (llm) {
+    try {
+      const user = `Redacta el reporte semanal a partir de estos datos AGREGADOS reales (no inventes cifras): ${JSON.stringify(
+        body
+      )}.
+Devuelve un objeto JSON con EXACTAMENTE estas claves:
+- "resumenSemanal": string que resuma la semana usando las cifras dadas, sin diagnóstico.
+- "patronesObservados": array de strings con coincidencias no causales.
+- "preguntasDermatologo": array de strings con preguntas útiles para la consulta.
+- "observacionesVisuales": array de strings descriptivas (usa las dadas si existen).
+- "calmaFamiliar": número (usa el valor dado).
+- "disclaimer": string breve.`;
+      const json = extractJson(await llm.complete(safeSystemPrompt, user));
+      return Response.json({
+        resumenSemanal: json.resumenSemanal || "",
+        patronesObservados: Array.isArray(json.patronesObservados)
+          ? json.patronesObservados
+          : [],
+        preguntasDermatologo: Array.isArray(json.preguntasDermatologo)
+          ? json.preguntasDermatologo
+          : [],
+        observacionesVisuales: Array.isArray(json.observacionesVisuales)
+          ? json.observacionesVisuales
+          : [],
+        calmaFamiliar:
+          typeof json.calmaFamiliar === "number"
+            ? json.calmaFamiliar
+            : body.calmaFamiliar || 0,
+        disclaimer: json.disclaimer || DISCLAIMER,
+      });
+    } catch {
+      // cae al generador
+    }
   }
+
+  return Response.json(genReport(body));
 }

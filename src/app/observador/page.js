@@ -1,160 +1,204 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import BrandNav from "@/components/BrandNav";
 import SafeDisclaimer from "@/components/SafeDisclaimer";
+import { useStore, addObservation } from "@/lib/store";
+import { computeImageSignal } from "@/lib/imageSignal";
+import {
+  Reveal,
+  Stagger,
+  StaggerItem,
+  Skeleton,
+  TactileButton,
+} from "@/components/motion";
+import {
+  Camera,
+  ImageSquare,
+  UploadSimple,
+  Eye,
+  ArrowsLeftRight,
+  Warning,
+  CheckCircle,
+  ShieldCheck,
+  ArrowRight,
+  ArrowLeft,
+} from "@/components/icons";
 
 export default function ObservadorPage() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [observation, setObservation] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const { observations, profile } = useStore();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const caregiver = mounted ? profile.caregiverName : "Ana";
+  const child = mounted ? profile.childName : "Lucas";
+
+  // Limpieza del object URL para evitar fugas de memoria.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   function handleImageChange(event) {
     const file = event.target.files?.[0];
-
     if (!file) return;
-
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedImage(file);
     setObservation(null);
-
-    const imageUrl = URL.createObjectURL(file);
-    setPreviewUrl(imageUrl);
+    setError(false);
+    setPreviewUrl(URL.createObjectURL(file));
   }
 
   async function handleGenerateObservation() {
+    if (!selectedImage) return;
     setLoading(true);
     setObservation(null);
+    setError(false);
 
     try {
+      // Señal visual REAL desde la imagen (rojez/brillo) y comparación con la previa.
+      const signal = await computeImageSignal(selectedImage);
+      const prev = observations[0]; // observación más reciente del perfil
+      const deltaPct =
+        prev && prev.redness
+          ? Math.round(((signal.redness - prev.redness) / prev.redness) * 100)
+          : null;
+      const imageName = selectedImage?.name || "imagen.jpg";
+
       const response = await fetch("/api/visual-observation", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imageName: selectedImage?.name || "registro-lucas-dia-7.jpg",
+          imageName,
+          redness: signal.redness,
+          brightness: signal.brightness,
+          hasPrevious: Boolean(prev),
+          deltaPct,
         }),
       });
-
+      if (!response.ok) throw new Error("bad status");
       const data = await response.json();
-      setObservation(data);
-    } catch (error) {
-      setObservation({
-        observacionVisual:
-          "No pudimos generar la observación visual en este momento.",
-        comparacionAnterior:
-          "Puedes guardar la imagen y volver a intentarlo más tarde.",
-        indiceVisualCambio: "No disponible",
-        limitaciones:
-          "La observación puede verse afectada por iluminación, distancia, ángulo y calidad de imagen.",
-        disclaimer:
-          "Esta observación no constituye diagnóstico médico y no reemplaza la evaluación del dermatólogo.",
+
+      // Persiste la observación en el historial del perfil.
+      addObservation({
+        ...data,
+        redness: signal.redness,
+        brightness: signal.brightness,
+        imageName,
       });
+      setObservation(data);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#FFF8EF] text-[#25324B]">
+    <main className="min-h-[100dvh] overflow-hidden bg-cream text-ink">
       <BrandNav active="observador" />
 
-      <section className="relative mx-auto max-w-7xl px-6 py-10 lg:py-14">
-        <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#FFE6D9]/70 blur-3xl" />
-        <div className="absolute -right-24 top-28 h-80 w-80 rounded-full bg-[#DCD7FF]/60 blur-3xl" />
+      <section className="relative mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:py-16">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-28 top-16 h-72 w-72 rounded-full bg-wash-peach/60 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-28 top-24 h-80 w-80 rounded-full bg-accent-soft/45 blur-3xl"
+        />
 
-        <div className="relative z-10 mb-8 grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end">
-          <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#F0DFCA] bg-[#FFFCF7] px-4 py-2 text-sm font-semibold text-[#6F6680] shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-[#F4A7A3]" />
+        {/* Encabezado */}
+        <div className="relative grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end">
+          <Reveal>
+            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-hairline bg-cream-card px-4 py-2 text-sm font-medium text-ink-muted">
+              <span className="h-2 w-2 rounded-full bg-coral" />
               Observador Visual · Descripción segura
-            </div>
-
-            <h1 className="font-serif text-5xl font-bold leading-[1.05] tracking-tight text-[#25324B] md:text-6xl">
+            </span>
+            <h1 className="font-display text-[2.4rem] font-semibold leading-[1.05] tracking-tight text-navy sm:text-5xl">
               Una foto para recordar mejor, no para diagnosticar.
             </h1>
-
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#625A70]">
-              Ana puede subir una imagen del brote de Lucas para generar una
-              observación visual descriptiva. La app compara cambios visibles,
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-muted">
+              {caregiver} puede subir una imagen del brote de {child} para generar
+              una observación visual descriptiva. La app compara cambios visibles,
               aclara sus limitaciones y prepara información para la consulta.
             </p>
-          </div>
+          </Reveal>
 
-          <div className="rounded-[2rem] border border-[#F0DFCA] bg-[#FFFCF7] p-6 shadow-xl shadow-[#C8B7A6]/10">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#6B5BD6]">
-              Límite ético
-            </p>
-
-            <h2 className="mt-4 font-serif text-3xl font-bold text-[#25324B]">
-              La cámara no reemplaza al dermatólogo.
-            </h2>
-
-            <div className="mt-5 space-y-3">
-              <div className="rounded-3xl bg-[#DFF5EA] p-4">
-                <p className="text-sm font-bold text-[#4B7A61]">
-                  Sí hace
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#25324B]">
-                  Describe cambios visibles y ayuda a compararlos en el tiempo.
-                </p>
-              </div>
-
-              <div className="rounded-3xl bg-[#FFE6D9] p-4">
-                <p className="text-sm font-bold text-[#A7685D]">
-                  No hace
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#25324B]">
-                  No diagnostica, no mide severidad médica y no indica
-                  tratamientos.
-                </p>
+          <Reveal delay={0.1}>
+            <div className="rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                Límite ético
+              </p>
+              <h2 className="mt-3 font-display text-2xl font-semibold text-navy">
+                La cámara no reemplaza al dermatólogo.
+              </h2>
+              <div className="mt-5 flex flex-col gap-3">
+                <div className="flex gap-3 rounded-[1.25rem] bg-wash-green p-4">
+                  <CheckCircle size={22} weight="duotone" className="mt-0.5 shrink-0 text-navy" />
+                  <div>
+                    <p className="text-sm font-semibold text-navy">Sí hace</p>
+                    <p className="mt-1 text-sm leading-relaxed text-navy/70">
+                      Describe cambios visibles y ayuda a compararlos en el tiempo.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-[1.25rem] bg-wash-peach p-4">
+                  <Warning size={22} weight="duotone" className="mt-0.5 shrink-0 text-coral" />
+                  <div>
+                    <p className="text-sm font-semibold text-navy">No hace</p>
+                    <p className="mt-1 text-sm leading-relaxed text-navy/70">
+                      No diagnostica, no mide severidad médica y no indica
+                      tratamientos.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
 
-        <div className="relative z-10 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[2rem] border border-[#F0DFCA] bg-[#FFFCF7] p-6 shadow-sm">
+        {/* Subida + vista previa */}
+        <div className="relative mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <Reveal className="rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
             <div className="mb-7 flex items-start justify-between gap-5">
               <div>
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#6B5BD6]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
                   Registro visual
                 </p>
-
-                <h2 className="mt-3 font-serif text-3xl font-bold text-[#25324B]">
+                <h2 className="mt-3 font-display text-2xl font-semibold text-navy sm:text-3xl">
                   Sube una imagen del brote
                 </h2>
-
-                <p className="mt-3 text-sm leading-6 text-[#625A70]">
-                  Para esta demo, la observación es simulada y segura. El flujo
-                  muestra cómo Ana podría documentar cambios entre consultas.
+                <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+                  Para esta demo, la observación es simulada y segura. Muestra
+                  cómo Ana documentaría cambios entre consultas.
                 </p>
               </div>
-
-              <div className="hidden rounded-3xl bg-[#FFF8EF] p-4 text-center md:block">
-                <p className="text-3xl">📷</p>
-                <p className="mt-2 text-xs font-bold text-[#7B7289]">
+              <div className="hidden shrink-0 flex-col items-center rounded-[1.25rem] bg-cream p-4 text-center ring-1 ring-inset ring-hairline md:flex">
+                <Camera size={26} weight="duotone" className="text-accent" />
+                <p className="mt-2 text-xs font-medium text-ink-muted">
                   Foto de apoyo
                 </p>
               </div>
             </div>
 
-            <label className="flex cursor-pointer flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-[#DCD7FF] bg-[#FFF8EF] p-8 text-center transition hover:bg-[#F7F3FF]">
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#DCD7FF] text-4xl">
-                🖼️
+            <label className="group flex cursor-pointer flex-col items-center justify-center rounded-[1.75rem] border-2 border-dashed border-accent-soft bg-cream p-8 text-center transition hover:border-accent hover:bg-accent-soft/20">
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-accent-soft p-4 transition-transform group-hover:-translate-y-1">
+                <UploadSimple size={30} weight="duotone" className="text-accent" />
               </span>
-
-              <span className="mt-5 text-lg font-black text-[#25324B]">
+              <span className="mt-5 text-lg font-semibold text-navy">
                 Seleccionar imagen
               </span>
-
-              <span className="mt-2 max-w-sm text-sm leading-6 text-[#625A70]">
+              <span className="mt-2 max-w-sm text-sm leading-relaxed text-ink-muted">
                 Sube una foto para que PielCalma genere una observación
                 descriptiva y comparativa.
               </span>
-
               <input
                 type="file"
                 accept="image/*"
@@ -164,176 +208,223 @@ export default function ObservadorPage() {
             </label>
 
             {selectedImage && (
-              <div className="mt-5 rounded-3xl bg-[#FFF8EF] p-5">
-                <p className="text-sm font-black text-[#25324B]">
-                  Imagen seleccionada
-                </p>
-                <p className="mt-1 break-all text-sm text-[#625A70]">
-                  {selectedImage.name}
-                </p>
+              <div className="mt-5 flex items-center gap-3 rounded-[1.25rem] bg-cream p-4 ring-1 ring-inset ring-hairline">
+                <ImageSquare size={22} weight="duotone" className="shrink-0 text-accent" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-navy">
+                    Imagen seleccionada
+                  </p>
+                  <p className="truncate text-sm text-ink-muted">
+                    {selectedImage.name}
+                  </p>
+                </div>
               </div>
             )}
 
             <button
               onClick={handleGenerateObservation}
-              disabled={loading}
-              className="mt-6 w-full rounded-full bg-[#6B5BD6] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#6B5BD6]/20 transition hover:-translate-y-1 hover:bg-[#5848C7] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={loading || !selectedImage}
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:bg-accent-press active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
             >
-              {loading
-                ? "Generando observación..."
-                : "Generar observación visual"}
+              {loading ? "Generando observación…" : "Generar observación visual"}
+              {!loading && <Eye size={18} weight="bold" />}
             </button>
+            {!selectedImage && (
+              <p className="mt-2 text-center text-xs text-ink-faint">
+                Selecciona una imagen para activar la observación.
+              </p>
+            )}
 
-            <div className="mt-5 rounded-3xl bg-[#DFF5EA] p-5">
-              <h3 className="font-black text-[#25324B]">
-                ¿Qué buscamos observar?
-              </h3>
-
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-[#25324B]/80">
-                <li>• Cambios visibles de coloración aparente.</li>
-                <li>• Diferencias de extensión respecto al registro previo.</li>
-                <li>• Limitaciones por luz, ángulo o distancia.</li>
+            <div className="mt-5 rounded-[1.25rem] bg-wash-green p-5">
+              <h3 className="font-semibold text-navy">¿Qué buscamos observar?</h3>
+              <ul className="mt-3 flex flex-col gap-2 text-sm leading-relaxed text-navy/80">
+                <li className="flex gap-2">
+                  <Eye size={16} weight="bold" className="mt-0.5 shrink-0 text-navy/60" />
+                  Cambios visibles de coloración aparente.
+                </li>
+                <li className="flex gap-2">
+                  <ArrowsLeftRight size={16} weight="bold" className="mt-0.5 shrink-0 text-navy/60" />
+                  Diferencias de extensión respecto al registro previo.
+                </li>
+                <li className="flex gap-2">
+                  <Warning size={16} weight="bold" className="mt-0.5 shrink-0 text-navy/60" />
+                  Limitaciones por luz, ángulo o distancia.
+                </li>
               </ul>
             </div>
-          </div>
+          </Reveal>
 
-          <div className="rounded-[2rem] border border-[#F0DFCA] bg-[#FFFCF7] p-6 shadow-sm">
-            <div className="mb-7 flex items-start justify-between gap-5">
-              <div>
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#6B5BD6]">
-                  Vista previa
-                </p>
-
-                <h2 className="mt-3 font-serif text-3xl font-bold text-[#25324B]">
-                  La memoria visual de Ana
-                </h2>
-
-                <p className="mt-3 text-sm leading-6 text-[#625A70]">
-                  La imagen no se interpreta como diagnóstico. Sirve como parte
-                  de la bitácora para comparar registros.
-                </p>
-              </div>
+          <Reveal delay={0.1} className="rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
+            <div className="mb-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                Vista previa
+              </p>
+              <h2 className="mt-3 font-display text-2xl font-semibold text-navy sm:text-3xl">
+                La memoria visual de {caregiver}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+                La imagen no se interpreta como diagnóstico. Sirve como parte de
+                la bitácora para comparar registros.
+              </p>
             </div>
 
             {previewUrl ? (
-              <div className="overflow-hidden rounded-[2rem] border border-[#F0DFCA] bg-[#FFF8EF] shadow-inner">
+              <div className="overflow-hidden rounded-[1.75rem] border border-hairline bg-cream">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={previewUrl}
-                  alt="Vista previa del registro visual"
+                  alt="Vista previa del registro visual de Lucas"
                   className="h-96 w-full object-cover"
                 />
               </div>
             ) : (
-              <div className="flex h-96 items-center justify-center rounded-[2rem] border border-[#F0DFCA] bg-[#FFF8EF] text-center">
+              <div className="flex h-96 items-center justify-center rounded-[1.75rem] border border-dashed border-hairline-strong bg-cream text-center">
                 <div className="max-w-sm px-6">
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#FFE6D9] text-4xl">
-                    🌤️
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-wash-peach">
+                    <ImageSquare size={34} weight="duotone" className="text-navy" />
                   </div>
-
-                  <h3 className="mt-5 font-serif text-2xl font-bold text-[#25324B]">
+                  <h3 className="mt-5 font-display text-2xl font-semibold text-navy">
                     Aún no hay imagen
                   </h3>
-
-                  <p className="mt-3 text-sm leading-6 text-[#625A70]">
-                    Cuando Ana seleccione una foto, aparecerá aquí para revisar
-                    el registro visual antes de generar la observación.
+                  <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+                    Cuando {caregiver} seleccione una foto, aparecerá aquí para
+                    revisar el registro visual antes de generar la observación.
                   </p>
                 </div>
               </div>
             )}
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-3xl bg-[#DCD7FF] p-5">
-                <p className="text-sm font-bold text-[#6B5BD6]">
-                  Comparación
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#25324B]/80">
-                  La app contrasta el registro actual con el anterior en
-                  lenguaje simple.
-                </p>
+              <div className="flex gap-3 rounded-[1.25rem] bg-accent-soft p-5">
+                <ArrowsLeftRight size={20} weight="duotone" className="mt-0.5 shrink-0 text-navy" />
+                <div>
+                  <p className="text-sm font-semibold text-navy">Comparación</p>
+                  <p className="mt-1 text-sm leading-relaxed text-navy/80">
+                    Contrasta el registro actual con el anterior en lenguaje
+                    simple.
+                  </p>
+                </div>
               </div>
+              <div className="flex gap-3 rounded-[1.25rem] bg-wash-peach p-5">
+                <Warning size={20} weight="duotone" className="mt-0.5 shrink-0 text-coral" />
+                <div>
+                  <p className="text-sm font-semibold text-navy">Precaución</p>
+                  <p className="mt-1 text-sm leading-relaxed text-navy/80">
+                    Luz, distancia y ángulo pueden cambiar la observación.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
 
-              <div className="rounded-3xl bg-[#FFE6D9] p-5">
-                <p className="text-sm font-bold text-[#A7685D]">
-                  Precaución
+        {/* Carga */}
+        {loading && (
+          <div className="relative mt-8 rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
+            <Skeleton className="h-4 w-44" />
+            <Skeleton className="mt-4 h-9 w-3/4" />
+            <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="flex flex-col gap-5">
+                <Skeleton className="h-28 w-full rounded-[1.25rem]" />
+                <Skeleton className="h-28 w-full rounded-[1.25rem]" />
+              </div>
+              <Skeleton className="h-60 w-full rounded-[1.75rem]" />
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && !loading && (
+          <div className="relative mt-8 flex flex-col gap-4 rounded-[var(--radius-card)] border border-coral/40 bg-wash-peach/50 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+            <div className="flex gap-3">
+              <Warning size={24} weight="duotone" className="mt-0.5 shrink-0 text-coral" />
+              <div>
+                <p className="font-semibold text-navy">
+                  No pudimos generar la observación ahora mismo.
                 </p>
-                <p className="mt-2 text-sm leading-6 text-[#25324B]/80">
-                  Luz, distancia y ángulo pueden cambiar la observación.
+                <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+                  Tu imagen sigue cargada. Puedes intentarlo de nuevo en un
+                  momento.
                 </p>
               </div>
             </div>
+            <TactileButton
+              onClick={handleGenerateObservation}
+              variant="secondary"
+              className="shrink-0 px-5 py-3 text-sm"
+            >
+              Reintentar
+            </TactileButton>
           </div>
-        </div>
+        )}
 
-        {observation && (
-          <div className="relative z-10 mt-8 rounded-[2rem] border border-[#F0DFCA] bg-[#FFFCF7] p-6 shadow-xl shadow-[#C8B7A6]/10">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#6B5BD6]">
-              Observación generada
-            </p>
-
-            <h2 className="mt-3 max-w-4xl font-serif text-3xl font-bold leading-tight text-[#25324B]">
-              Una descripción para recordar mejor lo que Ana observó.
+        {/* Observación */}
+        {observation && !loading && (
+          <div className="relative mt-8 rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                Observación generada
+              </p>
+              {mounted && observations.length > 0 && (
+                <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
+                  {observations.length} en el historial
+                </span>
+              )}
+            </div>
+            <h2 className="mt-3 max-w-4xl font-display text-2xl font-semibold leading-tight text-navy sm:text-3xl">
+              Una descripción para recordar mejor lo que {caregiver} observó.
             </h2>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="space-y-5">
-                <div className="rounded-3xl bg-[#FFF8EF] p-5">
-                  <h3 className="font-black text-[#25324B]">
-                    Lo que se observa
-                  </h3>
-
-                  <p className="mt-3 text-sm leading-6 text-[#625A70]">
+              <Stagger className="flex flex-col gap-5">
+                <StaggerItem className="rounded-[1.5rem] bg-cream p-5 ring-1 ring-inset ring-hairline">
+                  <h3 className="font-semibold text-navy">Lo que se observa</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-ink-muted">
                     {observation.observacionVisual}
                   </p>
-                </div>
-
-                <div className="rounded-3xl bg-[#DCD7FF] p-5">
-                  <h3 className="font-black text-[#25324B]">
+                </StaggerItem>
+                <StaggerItem className="rounded-[1.5rem] bg-accent-soft p-5">
+                  <h3 className="font-semibold text-navy">
                     Comparación con registro anterior
                   </h3>
-
-                  <p className="mt-3 text-sm leading-6 text-[#25324B]/80">
+                  <p className="mt-3 text-sm leading-relaxed text-navy/80">
                     {observation.comparacionAnterior}
                   </p>
-                </div>
-
-                <div className="rounded-3xl bg-[#FFE6D9] p-5">
-                  <h3 className="font-black text-[#25324B]">
+                </StaggerItem>
+                <StaggerItem className="rounded-[1.5rem] bg-wash-peach p-5">
+                  <h3 className="font-semibold text-navy">
                     Limitaciones de la imagen
                   </h3>
-
-                  <p className="mt-3 text-sm leading-6 text-[#25324B]/80">
+                  <p className="mt-3 text-sm leading-relaxed text-navy/80">
                     {observation.limitaciones}
                   </p>
-                </div>
-              </div>
+                </StaggerItem>
+              </Stagger>
 
-              <div className="space-y-5">
-                <div className="rounded-[2rem] bg-[#25324B] p-6 text-white shadow-xl shadow-[#25324B]/10">
-                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#DCD7FF]">
+              <div className="flex flex-col gap-5">
+                <div className="rounded-[1.5rem] bg-navy p-6 text-white shadow-[var(--shadow-soft)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-soft">
                     Índice Visual de Cambio
                   </p>
-
-                  <div className="mt-5 text-6xl font-black">
+                  <div className="mt-4 font-mono text-6xl font-semibold">
                     {observation.indiceVisualCambio}
                   </div>
-
-                  <p className="mt-5 text-sm leading-6 text-white/75">
+                  <p className="mt-4 text-sm leading-relaxed text-white/75">
                     Este índice es comparativo y descriptivo. No mide severidad
                     médica, no confirma causas y no reemplaza evaluación
                     profesional.
                   </p>
                 </div>
-
-                <div className="rounded-[2rem] border border-[#F0DFCA] bg-white p-6">
-                  <h3 className="font-serif text-2xl font-bold text-[#25324B]">
-                    ¿Por qué ayuda?
-                  </h3>
-
-                  <p className="mt-3 text-sm leading-6 text-[#625A70]">
-                    Ana puede llevar una secuencia visual ordenada, explicar
-                    mejor los cambios percibidos y preparar preguntas más
-                    concretas.
+                <div className="rounded-[1.5rem] border border-hairline bg-cream p-6">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck size={20} weight="duotone" className="text-accent" />
+                    <h3 className="font-display text-xl font-semibold text-navy">
+                      ¿Por qué ayuda?
+                    </h3>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+                    Ana puede llevar una secuencia visual ordenada, explicar mejor
+                    los cambios percibidos y preparar preguntas más concretas.
                   </p>
                 </div>
               </div>
@@ -344,24 +435,19 @@ export default function ObservadorPage() {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/reporte"
-                className="rounded-full bg-[#6B5BD6] px-6 py-4 text-center text-sm font-bold text-white shadow-lg shadow-[#6B5BD6]/20 transition hover:-translate-y-1 hover:bg-[#5848C7]"
-              >
+              <TactileButton href="/reporte" variant="primary" className="px-6 py-3.5 text-sm">
                 Generar reporte médico
-              </Link>
-
-              <Link
-                href="/registro"
-                className="rounded-full border border-[#E8DCCB] bg-white px-6 py-4 text-center text-sm font-bold text-[#25324B] transition hover:-translate-y-1"
-              >
+                <ArrowRight size={18} weight="bold" />
+              </TactileButton>
+              <TactileButton href="/registro" variant="secondary" className="px-6 py-3.5 text-sm">
+                <ArrowLeft size={18} weight="bold" />
                 Volver al registro
-              </Link>
+              </TactileButton>
             </div>
           </div>
         )}
 
-        <div className="relative z-10 mt-8">
+        <div className="relative mt-8">
           <SafeDisclaimer />
         </div>
       </section>

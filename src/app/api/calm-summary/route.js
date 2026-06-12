@@ -1,59 +1,37 @@
+import { getLLM, safeSystemPrompt, extractJson } from "@/lib/ai";
+import { genCalmSummary, DISCLAIMER } from "@/lib/generators";
+
 export async function GET() {
-  return Response.json({
-    status: "ok",
-    endpoint: "/api/calm-summary",
-    message: "Endpoint simulado de Modo Calma funcionando.",
-  });
+  return Response.json({ status: "ok", endpoint: "/api/calm-summary" });
 }
 
 export async function POST(request) {
-  try {
-    const body = await request.json();
+  const body = await request.json().catch(() => ({}));
+  const llm = getLLM();
 
-    const {
-      emotion = "preocupada",
-      itchLevel = 8,
-      sleepQuality = "malo",
-      triggers = ["calor", "sudor"],
-    } = body;
-
-    let mensajeEmpatico = "";
-
-    if (emotion === "agotada") {
-      mensajeEmpatico =
-        "Ana, entiendo que esta situación puede sentirse muy pesada. No tienes que resolverlo todo en este momento. Vamos a ordenar la información paso a paso.";
-    } else if (emotion === "preocupada") {
-      mensajeEmpatico =
-        "Ana, respira. Es comprensible que te preocupes cuando Lucas no duerme bien o se rasca mucho. Vamos a ordenar lo que observaste.";
-    } else if (emotion === "con dudas") {
-      mensajeEmpatico =
-        "Es normal tener dudas. PielCalma puede ayudarte a registrar lo importante para conversarlo mejor con el dermatólogo.";
-    } else {
-      mensajeEmpatico =
-        "Qué bueno que estás tranquila. Mantener un registro constante puede ayudar a identificar posibles coincidencias con el tiempo.";
+  if (llm) {
+    try {
+      const user = `Genera el acompañamiento de "Modo Calma" para la cuidadora a partir de estos datos reales del día: ${JSON.stringify(
+        body
+      )}.
+Devuelve un objeto JSON con EXACTAMENTE estas claves:
+- "mensajeEmpatico": string breve y cálido según la emoción.
+- "datosOrdenados": array de strings con lo registrado (comezón, sueño, factores).
+- "posibleCoincidencia": string que describa una posible coincidencia sin afirmar causa médica.
+- "preguntaDermatologo": string con una pregunta útil para la consulta.
+- "disclaimer": string breve.`;
+      const json = extractJson(await llm.complete(safeSystemPrompt, user));
+      return Response.json({
+        mensajeEmpatico: json.mensajeEmpatico || "",
+        datosOrdenados: Array.isArray(json.datosOrdenados) ? json.datosOrdenados : [],
+        posibleCoincidencia: json.posibleCoincidencia || "",
+        preguntaDermatologo: json.preguntaDermatologo || "",
+        disclaimer: json.disclaimer || DISCLAIMER,
+      });
+    } catch {
+      // cae al generador
     }
-
-    return Response.json({
-      mensajeEmpatico,
-      datosOrdenados: [
-        `Comezón registrada: ${itchLevel}/10`,
-        `Calidad de sueño: ${sleepQuality}`,
-        `Posibles factores observados: ${triggers.join(", ")}`,
-      ],
-      posibleCoincidencia:
-        "Se observa una posible coincidencia entre mayor comezón, sueño afectado y factores como calor o sudor. Esto no confirma una causa médica.",
-      preguntaDermatologo:
-        "Doctor/a, ¿estos brotes podrían estar relacionados con calor, sudoración o cambios en la rutina diaria?",
-      disclaimer:
-        "PielCalma no diagnostica, no indica tratamientos y no reemplaza al dermatólogo. Las observaciones son descriptivas y sirven para organizar información entre consultas.",
-    });
-  } catch (error) {
-    return Response.json(
-      {
-        error: "No se pudo generar el resumen de calma.",
-        details: error.message,
-      },
-      { status: 500 }
-    );
   }
+
+  return Response.json(genCalmSummary(body));
 }
