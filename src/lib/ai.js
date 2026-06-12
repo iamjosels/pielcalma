@@ -47,7 +47,10 @@ function provider() {
 }
 
 async function openaiComplete(system, user) {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  // Soporta OpenAI y cualquier endpoint OpenAI-compatible (p.ej. Azure AI
+  // Foundry expone .../openai/v1). Si OPENAI_BASE_URL no está, usa OpenAI.
+  const base = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+  const res = await fetch(`${base}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -55,7 +58,6 @@ async function openaiComplete(system, user) {
     },
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.5,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: system },
@@ -63,7 +65,10 @@ async function openaiComplete(system, user) {
       ],
     }),
   });
-  if (!res.ok) throw new Error(`openai ${res.status}`);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`openai ${res.status} ${detail.slice(0, 200)}`);
+  }
   const json = await res.json();
   return json.choices?.[0]?.message?.content || "";
 }
