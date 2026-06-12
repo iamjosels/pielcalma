@@ -5,6 +5,8 @@ import BrandNav from "@/components/BrandNav";
 import SafeDisclaimer from "@/components/SafeDisclaimer";
 import { useStore, addObservation } from "@/lib/store";
 import { prepareImage } from "@/lib/imageSignal";
+import { makeSkinSample, SKIN_VARIANTS } from "@/lib/demoSkin";
+import CameraCapture from "@/components/CameraCapture";
 import {
   Reveal,
   Stagger,
@@ -32,6 +34,9 @@ export default function ObservadorPage() {
   const [compare, setCompare] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
+  const [demoSamples, setDemoSamples] = useState(null);
 
   const { observations, profile } = useStore();
   const [mounted, setMounted] = useState(false);
@@ -46,8 +51,7 @@ export default function ObservadorPage() {
     };
   }, [previewUrl]);
 
-  function handleImageChange(event) {
-    const file = event.target.files?.[0];
+  function applyFile(file) {
     if (!file) return;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedImage(file);
@@ -56,6 +60,33 @@ export default function ObservadorPage() {
     setError(false);
     setPreviewUrl(URL.createObjectURL(file));
   }
+
+  function handleImageChange(event) {
+    applyFile(event.target.files?.[0]);
+  }
+
+  // Botón "secreto" de demo: la tecla "d" alterna el panel de ejemplos.
+  useEffect(() => {
+    function onKey(e) {
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        setShowDemo((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Genera las muestras sintéticas la primera vez que se abre el panel.
+  useEffect(() => {
+    if (showDemo && !demoSamples) {
+      Promise.all(SKIN_VARIANTS.map((v) => makeSkinSample(v)))
+        .then(setDemoSamples)
+        .catch(() => {});
+    }
+  }, [showDemo, demoSamples]);
 
   async function handleGenerateObservation() {
     if (!selectedImage) return;
@@ -165,7 +196,14 @@ export default function ObservadorPage() {
 
         {/* Subida + vista previa */}
         <div className="relative mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <Reveal className="rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
+          <Reveal className="relative rounded-[var(--radius-card)] border border-hairline bg-cream-card p-6 shadow-[var(--shadow-card)] sm:p-8">
+            {/* Disparador discreto de ejemplos de demo (también tecla "d") */}
+            <button
+              onClick={() => setShowDemo((v) => !v)}
+              title="Ejemplos de demo (tecla d)"
+              aria-label="Ejemplos de demo"
+              className="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-ink-faint/30 transition hover:scale-125 hover:bg-accent"
+            />
             <div className="mb-7 flex items-start justify-between gap-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
@@ -205,6 +243,49 @@ export default function ObservadorPage() {
                 className="hidden"
               />
             </label>
+
+            <button
+              onClick={() => setShowCamera(true)}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-hairline-strong bg-cream-card px-6 py-3 text-sm font-semibold text-navy transition hover:-translate-y-0.5 hover:border-accent/45 hover:text-accent active:scale-[0.98]"
+            >
+              <Camera size={18} weight="bold" />
+              Usar cámara
+            </button>
+
+            {showDemo && (
+              <div className="mt-4 rounded-[1.25rem] border border-dashed border-accent/40 bg-accent-soft/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                  Ejemplos de demo
+                </p>
+                <p className="mt-1 text-xs text-ink-muted">
+                  Imágenes sintéticas para mostrar el flujo (no son fotos reales).
+                </p>
+                <div className="mt-3 flex gap-3">
+                  {demoSamples ? (
+                    demoSamples.map((s) => (
+                      <button
+                        key={s.variant}
+                        onClick={() => {
+                          applyFile(s.file);
+                          setShowDemo(false);
+                        }}
+                        className="group flex flex-col items-center gap-1"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={s.dataUrl}
+                          alt={`Ejemplo ${s.label}`}
+                          className="h-16 w-16 rounded-[0.8rem] object-cover ring-1 ring-hairline transition group-hover:ring-2 group-hover:ring-accent"
+                        />
+                        <span className="text-[0.7rem] text-ink-muted">{s.label}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-xs text-ink-faint">Generando ejemplos…</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {selectedImage && (
               <div className="mt-5 flex items-center gap-3 rounded-[1.25rem] bg-cream p-4 ring-1 ring-inset ring-hairline">
@@ -499,6 +580,16 @@ export default function ObservadorPage() {
         <div className="relative mt-8">
           <SafeDisclaimer />
         </div>
+
+        {showCamera && (
+          <CameraCapture
+            onCapture={(file) => {
+              applyFile(file);
+              setShowCamera(false);
+            }}
+            onClose={() => setShowCamera(false)}
+          />
+        )}
       </section>
     </main>
   );
