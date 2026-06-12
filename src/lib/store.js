@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, useMemo } from "react";
+import * as cloud from "@/lib/cloud";
 
 const KEY = "pielcalma:v1";
 const EVENT = "pielcalma:change";
@@ -111,71 +112,71 @@ export function getCalmaEvents(state = readState()) {
   return state.calmaEvents.filter((e) => e.profileId === pid);
 }
 
-/* ---------------- mutations ---------------- */
+/* ---------------- mutations (localStorage + espejo a Supabase) ---------------- */
 export function addLog(log) {
-  return mutate((s) => {
-    const pid = getActiveProfile(s).id;
-    s.logs.push({
-      id: uid("log"),
-      profileId: pid,
-      date: log.date || todayISO(),
-      itchLevel: Number(log.itchLevel) || 0,
-      sleepQuality: log.sleepQuality || "regular",
-      routineStatus: log.routineStatus || "parcial",
-      caregiverEmotion: log.caregiverEmotion || "tranquila",
-      areas: log.areas || [],
-      triggers: log.triggers || [],
-      notes: log.notes || "",
-      createdAt: Date.now(),
-    });
+  const entry = {
+    id: uid("log"),
+    profileId: getActiveProfile().id,
+    date: log.date || todayISO(),
+    itchLevel: Number(log.itchLevel) || 0,
+    sleepQuality: log.sleepQuality || "regular",
+    routineStatus: log.routineStatus || "parcial",
+    caregiverEmotion: log.caregiverEmotion || "tranquila",
+    areas: log.areas || [],
+    triggers: log.triggers || [],
+    notes: log.notes || "",
+    createdAt: Date.now(),
+  };
+  mutate((s) => {
+    s.logs.push(entry);
     return s;
   });
+  cloud.save("logs", entry);
+  return entry;
 }
 
 export function addObservation(obs) {
-  return mutate((s) => {
-    const pid = getActiveProfile(s).id;
-    s.observations.push({
-      id: uid("obs"),
-      profileId: pid,
-      date: obs.date || todayISO(),
-      imageName: obs.imageName || "imagen.jpg",
-      redness: obs.redness ?? null,
-      brightness: obs.brightness ?? null,
-      thumb: obs.thumb ?? null,
-      observacionVisual: obs.observacionVisual || "",
-      comparacionAnterior: obs.comparacionAnterior || "",
-      indiceVisualCambio: obs.indiceVisualCambio || "",
-      limitaciones: obs.limitaciones || "",
-      createdAt: Date.now(),
-    });
-    // Conserva miniatura solo en las últimas 6 observaciones del perfil (cuota).
-    s.observations
-      .filter((o) => o.profileId === pid)
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(6)
-      .forEach((o) => {
-        o.thumb = null;
-      });
+  const entry = {
+    id: uid("obs"),
+    profileId: getActiveProfile().id,
+    date: obs.date || todayISO(),
+    imageName: obs.imageName || "imagen.jpg",
+    redness: obs.redness ?? null,
+    brightness: obs.brightness ?? null,
+    thumb: obs.thumb ?? null,
+    observacionVisual: obs.observacionVisual || "",
+    comparacionAnterior: obs.comparacionAnterior || "",
+    indiceVisualCambio: obs.indiceVisualCambio || "",
+    limitaciones: obs.limitaciones || "",
+    createdAt: Date.now(),
+  };
+  mutate((s) => {
+    s.observations.push(entry);
+    capThumbs(s, entry.profileId);
     return s;
   });
+  cloud.save("observations", entry); // la nube conserva la miniatura completa
+  return entry;
 }
 
 export function addCalmaEvent(emotion) {
-  return mutate((s) => {
-    const pid = getActiveProfile(s).id;
-    s.calmaEvents.push({
-      id: uid("calm"),
-      profileId: pid,
-      emotion,
-      date: todayISO(),
-      createdAt: Date.now(),
-    });
+  const entry = {
+    id: uid("calm"),
+    profileId: getActiveProfile().id,
+    emotion,
+    date: todayISO(),
+    createdAt: Date.now(),
+  };
+  mutate((s) => {
+    s.calmaEvents.push(entry);
     return s;
   });
+  cloud.save("calmaEvents", entry);
+  return entry;
 }
 
 export function setActiveProfile(id) {
+  // Preferencia de dispositivo: solo local.
   return mutate((s) => {
     if (s.profiles.some((p) => p.id === id)) s.activeProfileId = id;
     return s;
@@ -183,30 +184,43 @@ export function setActiveProfile(id) {
 }
 
 export function addProfile({ childName, childAge, caregiverName, conditionLabel }) {
-  const id = uid("p");
+  const profile = {
+    id: uid("p"),
+    caregiverName: caregiverName || "Cuidador/a",
+    childName: childName || "Niño/a",
+    childAge: Number(childAge) || null,
+    conditionLabel: conditionLabel || "Dermatitis atópica",
+    createdAt: Date.now(),
+  };
   mutate((s) => {
-    s.profiles.push({
-      id,
-      caregiverName: caregiverName || "Cuidador/a",
-      childName: childName || "Niño/a",
-      childAge: Number(childAge) || null,
-      conditionLabel: conditionLabel || "Dermatitis atópica",
-      createdAt: Date.now(),
-    });
-    s.activeProfileId = id;
+    s.profiles.push(profile);
+    s.activeProfileId = profile.id;
     return s;
   });
-  return id;
+  cloud.save("profiles", profile);
+  return profile.id;
 }
 
 export function resetProfileData() {
-  return mutate((s) => {
-    const pid = getActiveProfile(s).id;
+  const pid = getActiveProfile().id;
+  mutate((s) => {
     s.logs = s.logs.filter((l) => l.profileId !== pid);
     s.observations = s.observations.filter((o) => o.profileId !== pid);
     s.calmaEvents = s.calmaEvents.filter((e) => e.profileId !== pid);
     return s;
   });
+  cloud.removeProfileData(pid);
+}
+
+// Conserva miniatura solo en las últimas 6 observaciones del perfil (cuota local).
+function capThumbs(s, pid) {
+  s.observations
+    .filter((o) => o.profileId === pid)
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(6)
+    .forEach((o) => {
+      o.thumb = null;
+    });
 }
 
 /**
@@ -292,18 +306,23 @@ function buildDemoSeed(pid) {
 
 /** Siembra (o re-siembra) el perfil activo con el dataset rico. */
 export function seedDemo() {
-  return mutate((s) => {
-    const pid = getActiveProfile(s).id;
+  const pid = getActiveProfile().id;
+  const demo = buildDemoSeed(pid);
+  mutate((s) => {
     s.logs = s.logs.filter((l) => l.profileId !== pid);
     s.observations = s.observations.filter((o) => o.profileId !== pid);
     s.calmaEvents = s.calmaEvents.filter((e) => e.profileId !== pid);
-    const demo = buildDemoSeed(pid);
     s.logs.push(...demo.logs);
     s.observations.push(...demo.observations);
     s.calmaEvents.push(...demo.calmaEvents);
     s.demoSeeded = true;
     return s;
   });
+  cloud.removeProfileData(pid); // reemplaza en la nube
+  cloud.save("profiles", getActiveProfile());
+  cloud.saveMany("logs", demo.logs);
+  cloud.saveMany("observations", demo.observations);
+  cloud.saveMany("calmaEvents", demo.calmaEvents);
 }
 
 /**
@@ -327,6 +346,39 @@ export function ensureDemoSeed() {
     calmaEvents: demo.calmaEvents,
     demoSeeded: true,
   });
+  cloud.save("profiles", getActiveProfile(s));
+  cloud.saveMany("logs", demo.logs);
+  cloud.saveMany("observations", demo.observations);
+  cloud.saveMany("calmaEvents", demo.calmaEvents);
+}
+
+/**
+ * Trae los datos del usuario desde Supabase y los fusiona en local (la nube
+ * gana por id). No-op si Supabase no está configurado o falla.
+ */
+export async function syncFromCloud() {
+  if (typeof window === "undefined") return;
+  const data = await cloud.fetchAll();
+  if (!data) return;
+  const s = readState();
+  s.profiles = mergeById(s.profiles, data.profiles);
+  s.logs = mergeById(s.logs, data.logs);
+  s.observations = mergeById(s.observations, data.observations);
+  s.calmaEvents = mergeById(s.calmaEvents, data.calmaEvents);
+  if (!s.profiles.some((p) => p.id === s.activeProfileId)) {
+    s.activeProfileId = s.profiles[0]?.id || DEFAULT_PROFILE.id;
+  }
+  [...new Set(s.observations.map((o) => o.profileId))].forEach((pid) =>
+    capThumbs(s, pid)
+  );
+  writeState(s);
+}
+
+function mergeById(local, remote) {
+  const map = new Map();
+  for (const item of local) map.set(item.id, item);
+  for (const item of remote) map.set(item.id, item); // la nube gana
+  return [...map.values()];
 }
 
 /* ---------------- React hook ---------------- */
