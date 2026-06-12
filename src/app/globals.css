@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf8f5;
+  --foreground: #334155;
+  --cream: #faf8f5;
+  --lavender: #ebe7f6;
+  --calm-blue: #dbeaf5;
+  --soft-green: #dceee4;
+  --accent-lavender: #8b7bb8;
+  --accent-blue: #5b8fb9;
+  --accent-green: #6ba88a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-cream: var(--cream);
+  --color-lavender: var(--lavender);
+  --color-calm-blue: var(--calm-blue);
+  --color-soft-green: var(--soft-green);
+  --color-accent-lavender: var(--accent-lavender);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-green: var(--accent-green);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+
+  .print-area {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #fff8ef;
+}
+
+::selection {
+  background: #dcd7ff;
+  color: #25324b;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  nav,
+  button,
+  a[href="/calma"],
+  a[href="/observador"],
+  a[href="/registro"] {
+    display: none !important;
+  }
+
+  main {
+    background: white !important;
+  }
+}
