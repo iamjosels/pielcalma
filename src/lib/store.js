@@ -204,6 +204,24 @@ export function addProfile({ childName, childAge, caregiverName, conditionLabel 
   return profile.id;
 }
 
+/** Actualiza los datos del perfil activo (usado por el onboarding con IA). */
+export function updateActiveProfile(fields = {}) {
+  let updated = null;
+  mutate((s) => {
+    const p = s.profiles.find((x) => x.id === s.activeProfileId) || s.profiles[0];
+    if (p) {
+      if (fields.caregiverName) p.caregiverName = fields.caregiverName;
+      if (fields.childName) p.childName = fields.childName;
+      if (fields.childAge != null && fields.childAge !== "") p.childAge = Number(fields.childAge) || p.childAge;
+      if (fields.conditionLabel) p.conditionLabel = fields.conditionLabel;
+      updated = { ...p };
+    }
+    return s;
+  });
+  if (updated) cloud.save("profiles", updated);
+  return updated;
+}
+
 export function resetProfileData() {
   const pid = getActiveProfile().id;
   mutate((s) => {

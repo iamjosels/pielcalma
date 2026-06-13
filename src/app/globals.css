@@ -1,49 +1,59 @@
 @import "tailwindcss";
 
 /* ============================================================
-   PielCalma — Sistema de diseño
-   Paleta oficial de marca (Guía Alma) con disciplina taste-skill:
-   azul noche = ancla neutra · morado = ÚNICO acento de acción ·
-   pasteles = lavados de sección · sombras tintadas, sin glows.
+   PielCalma — Sistema de diseño (rediseño verde/menta 2026)
+   Identidad cálida y amable con mascota: verde menta = acción ·
+   teal profundo = ancla neutra · menta/ámbar = lavados de sección ·
+   ámbar = brote leve · rojo suave = riesgo alto · sombras tintadas.
    ============================================================ */
 
 :root {
-  /* Superficies cálidas */
-  --cream: #fff8ef; /* fondo de página */
-  --cream-card: #fffcf7; /* superficie de tarjeta */
-  --cream-sunk: #fbf2e6; /* superficie hundida / inputs */
+  /* Superficies (menta muy clara) */
+  --cream: #f3faf6; /* fondo de página: blanco mentolado */
+  --cream-card: #ffffff; /* superficie de tarjeta: blanco limpio */
+  --cream-sunk: #e8f4ec; /* superficie hundida / inputs: menta pálida */
 
-  /* Ancla neutra */
-  --navy: #25324b; /* secciones oscuras, encabezados */
-  --navy-press: #1d273b;
-  --ink: #2b2a33; /* texto cuerpo (off-black cálido, nunca #000) */
-  --ink-muted: #6f6680; /* texto secundario */
-  --ink-faint: #9a93a6;
+  /* Ancla neutra → verde/teal profundo */
+  --navy: #1f4d3f; /* secciones oscuras, encabezados */
+  --navy-press: #173a30;
+  --ink: #20322b; /* texto cuerpo (verde casi negro, nunca #000) */
+  --ink-muted: #5b726a; /* texto secundario */
+  --ink-faint: #8aa097;
 
-  /* Acento único de acción */
-  --accent: #6b5bd6; /* morado acción */
-  --accent-press: #5a49c4;
-  --accent-soft: #dcd7ff; /* lavanda: rings, fondos del acento */
+  /* Acento único de acción → verde amable */
+  --accent: #57b894; /* verde acción (CTA) */
+  --accent-press: #45a07e;
+  --accent-soft: #d6f0e3; /* menta: rings, fondos del acento */
 
   /* Lavados de sección (desaturados, nunca como CTA) */
-  --wash-lavender: #dcd7ff;
-  --wash-green: #dff5ea;
-  --wash-peach: #ffe6d9;
-  --coral: #f4a7a3; /* piel/humanidad, uso decorativo escaso */
+  --wash-lavender: #d6f0e3; /* (nombre conservado por compat) → menta */
+  --wash-green: #d6f0e3; /* ESTABLE */
+  --wash-peach: #fdeecd; /* BROTE LEVE (tinte ámbar cálido) */
+  --coral: #f0a98c; /* humanidad, uso decorativo escaso */
 
-  /* Líneas cálidas */
-  --hairline: #efe4d4;
-  --hairline-strong: #e6d6bf;
+  /* Semánticos heatmap / predictor */
+  --amber: #e8b23a; /* brote leve sólido (punto leyenda, anillo) */
+  --amber-soft: #fdeecd;
+  --danger: #e06a5a; /* riesgo alto (predictor) */
+  --danger-soft: #fbe0db;
+
+  /* Líneas mentoladas */
+  --hairline: #dcebe2;
+  --hairline-strong: #c7e0d2;
 
   /* Sombras tintadas al fondo (sin glow de color) */
-  --shadow-soft: 0 18px 40px -26px rgba(37, 50, 75, 0.22);
-  --shadow-card: 0 1px 0 rgba(37, 50, 75, 0.03),
-    0 16px 34px -22px rgba(37, 50, 75, 0.18);
-  --shadow-lift: 0 26px 54px -30px rgba(37, 50, 75, 0.3);
+  --shadow-soft: 0 18px 40px -26px rgba(31, 77, 63, 0.2);
+  --shadow-card: 0 1px 0 rgba(31, 77, 63, 0.03),
+    0 16px 34px -22px rgba(31, 77, 63, 0.16);
+  --shadow-lift: 0 26px 54px -30px rgba(31, 77, 63, 0.28);
 
-  /* Radio (un solo sistema de esquinas) */
-  --radius-card: 1.75rem;
-  --radius-control: 1rem;
+  /* Radio (un solo sistema de esquinas) — más redondeado para el look suave */
+  --radius-card: 1.9rem;
+  --radius-control: 1.1rem;
+
+  /* Chrome móvil: alto de la barra de pestañas (incluye safe-area Android). */
+  --tabbar-h: calc(4.25rem + env(safe-area-inset-bottom));
+  --topbar-h: calc(3.5rem + env(safe-area-inset-top));
 }
 
 @theme inline {
@@ -62,10 +72,14 @@
   --color-wash-green: var(--wash-green);
   --color-wash-peach: var(--wash-peach);
   --color-coral: var(--coral);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
   --color-hairline: var(--hairline);
   --color-hairline-strong: var(--hairline-strong);
 
-  --font-display: var(--font-display), Georgia, serif;
+  --font-display: var(--font-display), "Trebuchet MS", system-ui, sans-serif;
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
@@ -82,6 +96,8 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* App nativa: sin overscroll bounce ni selección accidental en el chrome. */
+  overscroll-behavior-y: none;
 }
 
 ::selection {
@@ -98,6 +114,28 @@ a {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ---------- App-shell móvil ---------- */
+/* Áreas seguras (notch / barra de gestos Android). Requiere viewport-fit=cover. */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Oculta scrollbars en tiras horizontales (chips de fecha, etc.) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* ---------- Animaciones (transform/opacity únicamente) ---------- */

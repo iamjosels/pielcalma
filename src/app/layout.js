@@ -1,6 +1,8 @@
-import { Geist, Geist_Mono, Fraunces } from "next/font/google";
+import { Geist, Geist_Mono, Baloo_2 } from "next/font/google";
 import "./globals.css";
 import DemoBootstrap from "@/components/DemoBootstrap";
+import WebShell from "@/components/web/WebShell";
+import Onboarding from "@/components/onboarding/Onboarding";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,29 +16,37 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-// Display editorial cálido (excepción creative/editorial del skill).
-const fraunces = Fraunces({
+// Display redondeado y amable (combina con la mascota verde).
+const baloo = Baloo_2({
   variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
-  axes: ["opsz", "SOFT"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata = {
-  title: "PielCalma | Bitácora inteligente de cuidado",
+  title: "PielCalma | Acompañamos cada paso del cuidado atópico",
   description:
-    "Acompañamiento inteligente para madres cuidadoras de niños con dermatitis atópica.",
+    "Tu copiloto cálido para el cuidado de la piel atópica: registra el día, anticipa con tus propios datos y llega preparada a la consulta. No diagnostica.",
+  applicationName: "PielCalma",
+};
+
+export const viewport = {
+  themeColor: "#1f4d3f",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }) {
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${baloo.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-cream text-ink">
+      <body className="min-h-[100dvh] bg-cream text-ink">
         <DemoBootstrap />
-        {children}
+        <WebShell>{children}</WebShell>
+        <Onboarding />
       </body>
     </html>
   );

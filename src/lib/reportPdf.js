@@ -8,19 +8,19 @@
  */
 
 const C = {
-  navy: [37, 50, 75],
-  navySoft: [70, 84, 112],
-  accent: [107, 91, 214],
-  accentSoft: [220, 215, 255],
-  lavWash: [238, 236, 251],
-  green: [223, 245, 234],
-  peach: [255, 230, 217],
-  cream: [255, 248, 239],
-  creamCard: [255, 252, 247],
-  ink: [43, 42, 51],
-  muted: [111, 102, 128],
-  faint: [154, 147, 166],
-  hair: [233, 223, 205],
+  navy: [31, 77, 63], // teal profundo (ancla)
+  navySoft: [60, 110, 92],
+  accent: [87, 184, 148], // verde acción
+  accentSoft: [214, 240, 227],
+  lavWash: [232, 244, 236],
+  green: [214, 240, 227],
+  peach: [253, 238, 205], // ámbar suave (brote leve)
+  cream: [243, 250, 246],
+  creamCard: [255, 255, 255],
+  ink: [32, 50, 43],
+  muted: [91, 114, 106],
+  faint: [138, 160, 151],
+  hair: [220, 235, 226],
   white: [255, 255, 255],
 };
 

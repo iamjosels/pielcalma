@@ -201,6 +201,38 @@ export function habitSummary(logs) {
   ];
 }
 
+/* ---------------- Mapa de Calor (Heatmap mensual) ---------------- */
+// Clasifica un día: "ambar" (brote) si comezón alta (>=7) o sueño malo;
+// "verde" (controlado) si hay registro y no es brote; "none" si no hay registro.
+// Mismo umbral que metrics().highItchDays (itchLevel >= 7).
+export function dayStatus(log) {
+  if (!log) return "none";
+  const high = Number(log.itchLevel) >= 7;
+  const badSleep = log.sleepQuality === "malo";
+  return high || badSleep ? "ambar" : "verde";
+}
+
+// Celdas del mes (month: 0-11). Toma el último log por fecha.
+export function monthHeatmap(logs, year, month) {
+  const byDate = {};
+  for (const l of logs) {
+    if (!byDate[l.date] || l.createdAt > byDate[l.date].createdAt) byDate[l.date] = l;
+  }
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = new Date(year, month, 1).getDay(); // 0=Dom
+  const mm = String(month + 1).padStart(2, "0");
+  const cells = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = `${year}-${mm}-${String(d).padStart(2, "0")}`;
+    const log = byDate[date] || null;
+    cells.push({ day: d, date, log, status: dayStatus(log) });
+  }
+  const verde = cells.filter((c) => c.status === "verde").length;
+  const ambar = cells.filter((c) => c.status === "ambar").length;
+  const registrados = verde + ambar;
+  return { cells, firstWeekday, verde, ambar, registrados, daysInMonth };
+}
+
 /** Resumen compacto en texto, base para el generador / la IA. */
 export function buildReportContext(logs, observations, calmaEvents) {
   const m = metrics(logs);

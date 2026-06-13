@@ -14,6 +14,7 @@ export async function POST(request) {
       const user = `Genera el acompañamiento de "Modo Calma" para la cuidadora a partir de estos datos reales del día: ${JSON.stringify(
         body
       )}.
+Si los datos incluyen "plan" (indicaciones del dermatólogo), ancla el "mensajeEmpatico" a ese plan (p.ej. "según el plan de tu doctor, mantén la rutina de emoliente; lo estás manejando muy bien"), SIN cambiarlo, sin sugerir tratamientos nuevos ni modificar dosis.
 Devuelve un objeto JSON con EXACTAMENTE estas claves:
 - "mensajeEmpatico": string breve y cálido según la emoción.
 - "datosOrdenados": array de strings con lo registrado (comezón, sueño, factores).

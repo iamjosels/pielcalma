@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { ensureDemoSeed, syncFromCloud } from "@/lib/store";
+import { ensurePlanSeed } from "@/lib/plan";
 
 /**
  * Arranque en cliente:
@@ -14,7 +15,10 @@ export default function DemoBootstrap() {
     let active = true;
     (async () => {
       await syncFromCloud();
-      if (active) ensureDemoSeed();
+      if (active) {
+        ensureDemoSeed();
+        ensurePlanSeed();
+      }
     })();
     return () => {
       active = false;

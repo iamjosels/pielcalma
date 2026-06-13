@@ -1,10 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 const SPRING = { type: "spring", stiffness: 100, damping: 20 };
 const MotionLink = motion.create(Link);
+
+/* ----------------------------------------------------------------
+   PageTransition — crossfade + leve slide entre rutas (app-shell).
+   Crossfade por opacidad (no mode="wait") para evitar saltos de scroll.
+---------------------------------------------------------------- */
+export function PageTransition({ children }) {
+  const pathname = usePathname();
+  const reduce = useReducedMotion();
+  if (reduce) return <>{children}</>;
+  return (
+    <AnimatePresence initial={false}>
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 /* ----------------------------------------------------------------
    Reveal — fade + rise al entrar al viewport (una sola vez).
